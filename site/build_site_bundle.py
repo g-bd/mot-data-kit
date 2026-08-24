@@ -9,6 +9,8 @@ Produces, ready to upload into `public_html/mot-metadata-kit/`:
     index.html             the Hebrew guide + download buttons for the two zips
     index_ascii.html       the same page with every non-ASCII codepoint as a decimal HTML entity —
                            paste THIS one when the editor/terminal garbles RTL Hebrew
+    wrapper-index.html     ~1 KB alternative: an iframe of the Cloudflare Pages copy. Upload it ONCE as
+                           index.html and the ministry page follows every later release by itself.
     downloads/*.zip        the release zips (built from the working tree if not found next to it)
 
 Why a folder and not a WordPress page: the host force-redirects anything WordPress renders to
@@ -25,6 +27,38 @@ from pathlib import Path
 KIT = Path(__file__).resolve().parent.parent
 ANCHOR = '<span class="chip"><b>mot-fix</b> · תיקונים מכניים</span></div>'
 EXCLUDE_TOP = {".git", "__pycache__", ".pytest_cache", ".claude-plugin", "DEPLOY-he.html", "build"}
+
+
+CF_URL = "https://mot-metadata-kit.pages.dev/"
+
+
+def wrapper_page() -> str:
+    """The one file the ministry host needs when the real page lives on Cloudflare Pages:
+    a full-viewport iframe of CF_URL. Uploaded ONCE — every later release updates Cloudflare and
+    this file keeps pointing at it, so nothing is ever re-uploaded to the ministry host.
+    Same pattern as /sensor-sal/ and /validation-viewer/ (which iframe their Netlify apps)."""
+    t = "מדריך mot-metadata-kit"
+    fallback = ("העמוד לא נטעןד - "
+                "לפתיחה ישירה:")
+    return f"""<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{t}</title>
+<style>
+  html,body{{margin:0;height:100%;background:#0E1B22;color:#EEF3F1;font-family:Arial,sans-serif}}
+  iframe{{position:fixed;inset:0;width:100%;height:100%;border:0}}
+  .fb{{position:fixed;inset-inline-start:0;inset-inline-end:0;bottom:0;padding:10px 16px;font-size:14px;text-align:center;background:#0E1B22}}
+  .fb a{{color:#5BC6C6}}
+</style>
+</head>
+<body>
+<iframe src="{CF_URL}" title="{t}" allow="fullscreen"></iframe>
+<noscript><p class="fb">{fallback} <a href="{CF_URL}">{CF_URL}</a></p></noscript>
+</body>
+</html>
+"""
 
 
 def standalone(page: str) -> str:
@@ -96,6 +130,7 @@ def main() -> int:
         raise SystemExit("charset must sit inside the first 1024 bytes")
     (out / "index.html").write_text(doc, encoding="utf-8", newline="\n")
     (out / "index_ascii.html").write_text(to_html_ascii(doc), encoding="ascii", newline="\n")
+    (out / "wrapper-index.html").write_text(to_html_ascii(wrapper_page()), encoding="ascii", newline="\n")
 
     for f in sorted(out.rglob("*")):
         if f.is_file():
