@@ -27,6 +27,29 @@ ANCHOR = '<span class="chip"><b>mot-fix</b> · תיקונים מכניים</span
 EXCLUDE_TOP = {".git", "__pycache__", ".pytest_cache", ".claude-plugin", "DEPLOY-he.html", "build"}
 
 
+def standalone(page: str) -> str:
+    """GUIDE-he.html is authored for the artifact host, which injects <!doctype>/<html>/<head>.
+    Served raw by Apache (Content-Type: text/html with NO charset) the browser then guesses the
+    encoding and Hebrew garbles — so the site copy must be a complete document carrying its own
+    <meta charset>, and that charset must sit inside the first 1024 bytes."""
+    title = "\u05de\u05d3\u05e8\u05d9\u05da mot-metadata-kit"
+    if "<title>" in page:
+        title = page.split("<title>", 1)[1].split("</title>", 1)[0]
+        page = page.replace(f"<title>{title}</title>\n", "", 1).replace(f"<title>{title}</title>", "", 1)
+    desc = ("\u05e2\u05e8\u05db\u05ea skills \u05dc\u05d4\u05e4\u05e6\u05ea \u05de\u05d9\u05d3\u05e2 "
+            "\u05ea\u05d7\u05d1\u05d5\u05e8\u05ea\u05d9 \u05e9\u05dc \u05de\u05e9\u05e8\u05d3 "
+            "\u05d4\u05ea\u05d7\u05d1\u05d5\u05e8\u05d4")
+    return (
+        "<!doctype html>\n"
+        '<html lang="he" dir="rtl">\n<head>\n'
+        '<meta charset="utf-8">\n'
+        '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
+        f"<title>{title}</title>\n"
+        f'<meta name="description" content="{desc}">\n'
+        "</head>\n<body>\n" + page + "\n</body>\n</html>\n"
+    )
+
+
 def to_html_ascii(html: str) -> str:
     """Every non-ASCII codepoint as a decimal HTML entity (&#1510;) — survives any paste route."""
     return "".join(ch if ord(ch) < 128 else f"&#{ord(ch)};" for ch in html)
@@ -68,8 +91,11 @@ def main() -> int:
       <a class="chip" style="text-decoration:none" href="downloads/{full}"><b>⬇ {full}</b> · הערכה המלאה</a>
       <a class="chip" style="text-decoration:none" href="downloads/{skill}"><b>⬇ mot-metadata-skill</b> · skill יחיד לצ'אט</a>
     </div>''', 1)
-    (out / "index.html").write_text(page, encoding="utf-8", newline="\n")
-    (out / "index_ascii.html").write_text(to_html_ascii(page), encoding="ascii", newline="\n")
+    doc = standalone(page)
+    if "charset" not in doc[:1024]:
+        raise SystemExit("charset must sit inside the first 1024 bytes")
+    (out / "index.html").write_text(doc, encoding="utf-8", newline="\n")
+    (out / "index_ascii.html").write_text(to_html_ascii(doc), encoding="ascii", newline="\n")
 
     for f in sorted(out.rglob("*")):
         if f.is_file():

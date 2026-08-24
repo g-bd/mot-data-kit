@@ -15,6 +15,10 @@ DirectoryIndex index.html
 # and re-introduces the login gate this folder exists to avoid.
 ErrorDocument 404 default
 
+# The pages are UTF-8. Without this Apache sends text/html with no charset and the browser
+# guesses (Windows-1255 on this host) - Hebrew renders as mojibake even though the file is fine.
+AddDefaultCharset utf-8
+
 <IfModule mod_mime.c>
   AddType application/zip .zip
 </IfModule>
