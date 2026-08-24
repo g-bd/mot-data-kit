@@ -14,7 +14,7 @@ Steps
      Uses `gh` when it is authenticated; otherwise the REST API with the token from `git credential fill`.
   5. site bundle rebuilt into ../build/wp-upload/mot-metadata-kit/ (upload it to the ministry host).
   6. --cloudflare: `wrangler pages deploy` of that bundle to the project named by --cf-project
-     (default `mot-metadata-kit`). Requires wrangler + a Cloudflare login; nothing is created for you.
+     (default `mot-metadata-kit` → https://mot-metadata-kit.pages.dev/, already created).
 
 Never force-pushes, never deletes a release, and refuses to publish a version that already has a tag.
 """
@@ -131,9 +131,10 @@ def main() -> int:
 
     print("[6/6] Cloudflare Pages")
     if not a.cloudflare:
-        print("   skipped (no Cloudflare host is set up for this kit; use --cloudflare once you create the project)")
+        print("   skipped (pass --cloudflare to publish the page to https://mot-metadata-kit.pages.dev/)")
     else:
-        r = subprocess.run(["npx", "wrangler", "pages", "deploy", str(bundle), "--project-name", a.cf_project],
+        r = subprocess.run(["npx", "wrangler", "pages", "deploy", str(bundle), "--project-name", a.cf_project,
+                            "--branch", "main", "--commit-dirty=true", "--commit-message", tag],
                            capture_output=True, text=True, shell=True)
         print("  ", (r.stdout or r.stderr).strip()[-400:])
         if r.returncode != 0:

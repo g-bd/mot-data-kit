@@ -6,3 +6,6 @@ evals/results/
 
 # internal planning page — kept local, not distributed
 DEPLOY-he.html
+
+# wrangler writes a local account cache here — never publish it
+.wrangler/
