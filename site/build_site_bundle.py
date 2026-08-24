@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
-"""Assemble the upload bundle for the ministry site (mot-roundtbl.org.il/mot-metadata-kit/).
+"""Assemble the publishing roots — same split as sensor-sal / validation-viewer:
 
-    python site/build_site_bundle.py [--out ../build/wp-upload/metadata-kit] [--version 0.5.0]
+    python site/build_site_bundle.py [--version 0.6.2]
 
-Produces, ready to upload into `public_html/mot-metadata-kit/`:
+    ../build/site-root/          what Cloudflare Pages serves (the real page):
+        index.html               the Hebrew guide, full standalone document (doctype + meta charset)
+        index_ascii.html         entity-encoded twin (only if RTL ever garbles through a paste route)
+        .htaccess                kept so the same root also works on any Apache host
+        downloads/*.zip          the release zips (current version only)
 
-    .htaccess              from site/htaccess.template (LF endings preserved)
-    index.html             the Hebrew guide + download buttons for the two zips
-    index_ascii.html       the same page with every non-ASCII codepoint as a decimal HTML entity —
-                           paste THIS one when the editor/terminal garbles RTL Hebrew
-    wrapper-index.html     ~1 KB alternative: an iframe of the Cloudflare Pages copy. Upload it ONCE as
-                           index.html and the ministry page follows every later release by itself.
-    downloads/*.zip        the release zips (built from the working tree if not found next to it)
+    ../build/wp-upload/          what the MINISTRY host gets — ONE ~2 KB file, uploaded ONCE:
+        index.html               pure-ASCII iframe wrapper of the Cloudflare page, with a health
+                                 probe and a visible fallback link. A new release changes NOTHING
+                                 here — Cloudflare is updated and this file keeps pointing at it.
 
 Why a folder and not a WordPress page: the host force-redirects anything WordPress renders to
 wp-login.php for anonymous visitors. A real file in a real directory is served by Apache, PHP never
@@ -33,13 +34,12 @@ CF_URL = "https://mot-metadata-kit.pages.dev/"
 
 
 def wrapper_page() -> str:
-    """The one file the ministry host needs when the real page lives on Cloudflare Pages:
-    a full-viewport iframe of CF_URL. Uploaded ONCE — every later release updates Cloudflare and
-    this file keeps pointing at it, so nothing is ever re-uploaded to the ministry host.
-    Same pattern as /sensor-sal/ and /validation-viewer/ (which iframe their Netlify apps)."""
+    """The ONE file on the ministry host (public_html/mot-metadata-kit/index.html): a full-viewport
+    iframe of the Cloudflare page, with a health probe that reveals a direct link when the host is
+    unreachable. Same pattern as /sensor-sal/ and /validation-viewer/. Uploaded ONCE — releases only
+    update Cloudflare. Emitted entity-encoded (pure ASCII) so no paste route can garble the Hebrew."""
     t = "מדריך mot-metadata-kit"
-    fallback = ("העמוד לא נטעןד - "
-                "לפתיחה ישירה:")
+    fb = "העמוד אינו נטען כרגע — לפתיחה ישירה: "
     return f"""<!doctype html>
 <html lang="he" dir="rtl">
 <head>
@@ -49,13 +49,25 @@ def wrapper_page() -> str:
 <style>
   html,body{{margin:0;height:100%;background:#0E1B22;color:#EEF3F1;font-family:Arial,sans-serif}}
   iframe{{position:fixed;inset:0;width:100%;height:100%;border:0}}
-  .fb{{position:fixed;inset-inline-start:0;inset-inline-end:0;bottom:0;padding:10px 16px;font-size:14px;text-align:center;background:#0E1B22}}
-  .fb a{{color:#5BC6C6}}
+  #fb{{position:fixed;inset-inline-start:0;inset-inline-end:0;bottom:0;padding:10px 16px;font-size:14px;text-align:center;background:#0E1B22;display:none}}
+  #fb a{{color:#5BC6C6}}
 </style>
 </head>
 <body>
-<iframe src="{CF_URL}" title="{t}" allow="fullscreen"></iframe>
-<noscript><p class="fb">{fallback} <a href="{CF_URL}">{CF_URL}</a></p></noscript>
+<iframe id="app" src="{CF_URL}" title="{t}" allow="fullscreen"></iframe>
+<p id="fb">{fb}<a href="{CF_URL}">{CF_URL}</a></p>
+<noscript><p style="display:block;position:fixed;bottom:0;inset-inline-start:0;inset-inline-end:0;padding:10px 16px;font-size:14px;text-align:center;background:#0E1B22;color:#EEF3F1">{fb}<a style="color:#5BC6C6" href="{CF_URL}">{CF_URL}</a></p></noscript>
+<script>
+(function () {{
+  // Health probe: if the host does not answer within 6s, surface the direct link.
+  var shown = false;
+  function show() {{ if (!shown) {{ shown = true; document.getElementById("fb").style.display = "block"; }} }}
+  var timer = setTimeout(show, 6000);
+  fetch("{CF_URL}", {{ method: "HEAD", mode: "no-cors", cache: "no-store" }})
+    .then(function () {{ clearTimeout(timer); }})
+    .catch(show);
+}})();
+</script>
 </body>
 </html>
 """
@@ -102,8 +114,9 @@ def build_zip(out: Path, prefix: str, include: list[str] | None = None) -> None:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--out", default=str(KIT.parent / "build" / "wp-upload" / "mot-metadata-kit"))
-    ap.add_argument("--version", default="0.5.0")
+    ap.add_argument("--out", default=str(KIT.parent / "build" / "site-root"))
+    ap.add_argument("--wp-out", default=str(KIT.parent / "build" / "wp-upload"))
+    ap.add_argument("--version", default="0.6.2")
     a = ap.parse_args()
     out = Path(a.out)
     (out / "downloads").mkdir(parents=True, exist_ok=True)
@@ -133,13 +146,18 @@ def main() -> int:
         raise SystemExit("charset must sit inside the first 1024 bytes")
     (out / "index.html").write_text(doc, encoding="utf-8", newline="\n")
     (out / "index_ascii.html").write_text(to_html_ascii(doc), encoding="ascii", newline="\n")
-    (out / "wrapper-index.html").write_text(to_html_ascii(wrapper_page()), encoding="ascii", newline="\n")
 
-    for f in sorted(out.rglob("*")):
-        if f.is_file():
-            print(f"  {f.relative_to(out).as_posix():42} {round(f.stat().st_size/1024):>6} KB")
-    print(f"bundle ready: {out}")
-    print("upload into public_html/mot-metadata-kit/  —  .htaccess FIRST, on its own, then verify anonymously")
+    wp = Path(a.wp_out)
+    wp.mkdir(parents=True, exist_ok=True)
+    (wp / "index.html").write_text(to_html_ascii(wrapper_page()), encoding="ascii", newline="\n")
+
+    for root, label in ((out, "site-root (Cloudflare)"), (wp, "wp-upload (ministry, once)")):
+        print(f"  {label}:")
+        for f in sorted(root.rglob("*")):
+            if f.is_file():
+                print(f"    {f.relative_to(root).as_posix():40} {round(f.stat().st_size/1024):>6} KB")
+    print(f"cloudflare root: {out}")
+    print(f"ministry file:   {wp / 'index.html'}  — upload ONCE as public_html/mot-metadata-kit/index.html")
     return 0
 
 

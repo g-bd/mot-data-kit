@@ -12,7 +12,8 @@ Steps
   3. zips built from the working tree, excluding .git, __pycache__, .claude-plugin and internal pages.
   4. git commit (if the tree is dirty), tag vX.Y.Z, push both — then a GitHub release with the two zips.
      Uses `gh` when it is authenticated; otherwise the REST API with the token from `git credential fill`.
-  5. site bundle rebuilt into ../build/wp-upload/mot-metadata-kit/ (upload it to the ministry host).
+  5. publishing roots rebuilt: ../build/site-root/ (Cloudflare) + ../build/wp-upload/index.html
+     (the one-time ministry wrapper — normally nothing to upload).
   6. --cloudflare: `wrangler pages deploy` of that bundle to the project named by --cf-project
      (default `mot-metadata-kit` → https://mot-metadata-kit.pages.dev/, already created).
 
@@ -131,7 +132,7 @@ def main() -> int:
 
     print("[3/6] site bundle + zips")
     run([sys.executable, str(KIT / "site" / "build_site_bundle.py"), "--version", version], capture=False)
-    bundle = KIT.parent / "build" / "wp-upload" / "mot-metadata-kit"
+    bundle = KIT.parent / "build" / "site-root"
     zips = [bundle / "downloads" / f"mot-metadata-kit-v{version}.zip",
             bundle / "downloads" / f"mot-metadata-skill-v{version}.zip"]
     for z in zips:
@@ -139,7 +140,7 @@ def main() -> int:
             raise SystemExit(f"missing {z}")
 
     print("[3.5/6] leak scan")
-    hits = leak_scan(bundle)
+    hits = leak_scan(bundle) + leak_scan(KIT.parent / "build" / "wp-upload")
     if hits:
         for h in hits:
             print("   !!", h)
