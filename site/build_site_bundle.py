@@ -26,7 +26,7 @@ from pathlib import Path
 
 KIT = Path(__file__).resolve().parent.parent
 ANCHOR = '<span class="chip"><b>mot-fix</b> · תיקונים מכניים</span></div>'
-EXCLUDE_TOP = {".git", "__pycache__", ".pytest_cache", ".claude-plugin", "DEPLOY-he.html", "build"}
+EXCLUDE_TOP = {".git", ".wrangler", "__pycache__", ".pytest_cache", ".claude-plugin", "DEPLOY-he.html", "build"}
 
 
 CF_URL = "https://mot-metadata-kit.pages.dev/"
@@ -107,6 +107,9 @@ def main() -> int:
     a = ap.parse_args()
     out = Path(a.out)
     (out / "downloads").mkdir(parents=True, exist_ok=True)
+    shutil.rmtree(out / ".wrangler", ignore_errors=True)          # wrangler drops its account cache here on deploy
+    for stale in (out / "downloads").glob("*.zip"):               # only the current version's zips may be published
+        stale.unlink()
 
     # .htaccess — bytes, so the LF endings survive on Windows
     (out / ".htaccess").write_bytes((KIT / "site" / "htaccess.template").read_bytes())

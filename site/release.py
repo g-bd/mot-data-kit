@@ -21,10 +21,12 @@ Never force-pushes, never deletes a release, and refuses to publish a version th
 from __future__ import annotations
 
 import argparse
+import io
 import json
 import re
 import subprocess
 import sys
+import zipfile
 from pathlib import Path
 
 KIT = Path(__file__).resolve().parent.parent
@@ -39,6 +41,42 @@ def run(cmd: list[str], cwd: Path | None = None, check: bool = True, capture: bo
         print((r.stdout or "") + (r.stderr or ""))
         raise SystemExit(f"failed: {' '.join(str(c) for c in cmd)}")
     return r
+
+
+LEAK_PATTERNS = {
+    "github token": re.compile(rb"gh[pousr]_[A-Za-z0-9]{20,}"),
+    "private key": re.compile(rb"BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY"),
+    "aws key": re.compile(rb"AKIA[0-9A-Z]{16}"),
+    "cloudflare account file": re.compile(rb"\"account_id\":\s*\"[0-9a-f]{32}\""),
+    "cloudflare account file2": re.compile(rb"\"id\":\s*\"[0-9a-f]{32}\""),
+    "netlify token": re.compile(rb"(?i)netlify[_-]?auth[_-]?token\s*[:=]\s*[\"'][A-Za-z0-9]"),
+    "bearer token": re.compile(rb"(?i)authorization:\s*bearer\s+[A-Za-z0-9_\-\.]{20,}"),
+    "slack token": re.compile(rb"xox[baprs]-[A-Za-z0-9\-]{10,}"),
+}
+LEAK_NAMES = re.compile(r"(\.wrangler|\.deploy_secrets|\.app_config|\.env$|id_rsa|\.pem$|credentials\.json|DEPLOY-he)", re.I)
+
+
+def leak_scan(bundle: Path) -> list[str]:
+    """Scan everything about to be published (bundle files + inside the zips). Returns findings."""
+    hits: list[str] = []
+
+    def scan(name: str, data: bytes, where: str) -> None:
+        if LEAK_NAMES.search(name):
+            hits.append(f"{where}: flagged file name '{name}'")
+        for label, rx in LEAK_PATTERNS.items():
+            if rx.search(data):
+                hits.append(f"{where}: {label} in '{name}'")
+
+    for f in sorted(bundle.rglob("*")):
+        if not f.is_file():
+            continue
+        data = f.read_bytes()
+        scan(f.name, data, "bundle")
+        if f.suffix == ".zip":
+            with zipfile.ZipFile(io.BytesIO(data)) as z:
+                for n in z.namelist():
+                    scan(n, z.read(n), f"zip:{f.name}")
+    return sorted(set(hits))
 
 
 def github_token() -> str:
@@ -99,6 +137,14 @@ def main() -> int:
     for z in zips:
         if not z.exists():
             raise SystemExit(f"missing {z}")
+
+    print("[3.5/6] leak scan")
+    hits = leak_scan(bundle)
+    if hits:
+        for h in hits:
+            print("   !!", h)
+        raise SystemExit("leak scan failed — NOTHING was published. Fix the findings and rerun.")
+    print("   clean")
 
     print("[4/6] git")
     dirty = bool(run(["git", "status", "--porcelain"]).stdout.strip())
