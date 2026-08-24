@@ -147,9 +147,10 @@
       <h3>Claude Code</h3>
       <ol class="steps">
         <li>העתיקו את התיקייה <code>mot-data-kit</code> למיקום קבוע, למשל <code>G:\tools\mot-data-kit</code>.</li>
-        <li>הריצו עם הפלאגין — או העתיקו את שלוש התיקיות מ-<code>skills/</code> אל <code>%USERPROFILE%\.claude\skills\</code> (כישורים אישיים, זמינים בכל פרויקט).
-          <div class="term"><div class="bar"><i></i><i></i><i></i></div><pre><span class="c"># run with the plugin</span>
-claude --plugin-dir G:\tools\mot-data-kit</pre></div></li>
+        <li>מתקינים בשתי פקודות מתוך Claude Code — זו הדרך המומלצת, וכך גם מקבלים עדכונים בהמשך (<code>/plugin update mot-data-kit</code>):
+          <div class="term"><div class="bar"><i></i><i></i><i></i></div><pre>/plugin marketplace add g-bd/mot-data-kit
+/plugin install mot-data-kit@mot-data-kit</pre></div>
+          לחלופין, מתיקייה מקומית: <code dir="ltr">claude --plugin-dir G:	ools\mot-data-kit</code>, או העתקת התיקיות מ-<code>skills/</code> אל <code dir="ltr">%USERPROFILE%\.claude\skills\</code>.</li>
         <li>הריצו פעם אחת <code dir="ltr">python skills/mot-metadata/scripts/mot_metadata.py setup</code> — מתקין/מוודא את כל חבילות ה-Python ובודק שיש דפדפן ל-PDF.</li>
         <li>בדקו ש-<code>/mot-metadata</code> מופיע בהשלמת הפקודות. ה-skill מופעל גם אוטומטית כשמבקשים "מטא-דאטה", "נוהל הפצת מידע", "און-בורד" או "גלאים".</li>
       </ol>
@@ -250,7 +251,7 @@ claude --plugin-dir G:\tools\mot-data-kit</pre></div></li>
     mot-sensors/   SKILL.md  references/{profile.json, sensor-format-v1.02.md, example-….json}
     mot-fix/       SKILL.md  (uses ../mot-metadata/scripts/mot_fix.py)
   scripts also include: spec_update.py (diff a new spec PDF against the bundled dictionary)</pre></div>
-      <footer>נבדק בהרצה אמיתית של Claude Code עם ‎--plugin-dir (הכישור אותר, הריץ ולידציה וסיכם בעברית) ועל נתונים אמיתיים: אגרגציית Google ארצית יולי 2026 כולל שכבות המפה (0 שגיאות לאחר תשאול), סקר און-בורד מטרופולין ת"א פעימה 1 (ver0.8 — 57 שגיאות אותרו, גרסה מתוקנת הופקה), חבילת גלאים מאי 2026 (3 טבלאות, כל השדות תואמים לפורמט 1.02).</footer>
+      <footer>נבדק על נתונים אמיתיים: אגרגציית Google ארצית יולי 2026 כולל שכבות המפה (0 שגיאות לאחר תשאול), סקר און-בורד מטרופולין ת"א פעימה 1 (ver0.8 — 57 שגיאות אותרו, גרסה מתוקנת הופקה), חבילת גלאים מאי 2026 (3 טבלאות, כל השדות תואמים לפורמט 1.02).</footer>
     </section>
   </article>
 </div>
