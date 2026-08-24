@@ -1,0 +1,33 @@
+# mot-data-kit — static page on the ministry host (public_html/metadata-kit/)
+#
+# Minimal on purpose: this folder is ONE page plus a downloads/ folder, not an SPA, so there are
+# no rewrite rules here. Upload this file FIRST, on its own, before index.html — if the folder then
+# answers 500 on every request, this host's AllowOverride does not include Options: delete the
+# "Options -Indexes" line and re-upload. (WP File Manager hides dotfiles — turn on "show hidden
+# files" or you will not see this file and will conclude it never uploaded.)
+#
+# Must be saved with LF line endings: Apache does not strip a CR, it ends up inside directive values.
+
+Options -Indexes
+DirectoryIndex index.html
+
+# Without this, a 404 in this folder falls through to WordPress's error document, which boots PHP
+# and re-introduces the login gate this folder exists to avoid.
+ErrorDocument 404 default
+
+<IfModule mod_mime.c>
+  AddType application/zip .zip
+</IfModule>
+
+<IfModule mod_headers.c>
+  # The page and the zips keep stable names and are replaced in place on every version, so no
+  # heuristic caching: without an explicit header Apache invents freshness from file age (~10%),
+  # which after a few weeks is days of staleness.
+  <FilesMatch "\.(html|zip)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript image/svg+xml
+</IfModule>
