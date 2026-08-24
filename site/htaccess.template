@@ -1,4 +1,4 @@
-# mot-data-kit — static page on the ministry host (public_html/metadata-kit/)
+# mot-metadata-kit — static page on the ministry host (public_html/mot-metadata-kit/)
 #
 # Minimal on purpose: this folder is ONE page plus a downloads/ folder, not an SPA, so there are
 # no rewrite rules here. Upload this file FIRST, on its own, before index.html — if the folder then

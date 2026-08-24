@@ -1,4 +1,4 @@
-"""Synthetic fixtures for the mot-data-kit engine tests (no real data needed)."""
+"""Synthetic fixtures for the mot-metadata-kit engine tests (no real data needed)."""
 from __future__ import annotations
 
 import io

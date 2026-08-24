@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Assemble the upload bundle for the ministry site (mot-roundtbl.org.il/metadata-kit/).
+"""Assemble the upload bundle for the ministry site (mot-roundtbl.org.il/mot-metadata-kit/).
 
     python site/build_site_bundle.py [--out ../build/wp-upload/metadata-kit] [--version 0.5.0]
 
-Produces, ready to upload into `public_html/metadata-kit/`:
+Produces, ready to upload into `public_html/mot-metadata-kit/`:
 
     .htaccess              from site/htaccess.template (LF endings preserved)
     index.html             the Hebrew guide + download buttons for the two zips
@@ -45,7 +45,7 @@ def build_zip(out: Path, prefix: str, include: list[str] | None = None) -> None:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--out", default=str(KIT.parent / "build" / "wp-upload" / "metadata-kit"))
+    ap.add_argument("--out", default=str(KIT.parent / "build" / "wp-upload" / "mot-metadata-kit"))
     ap.add_argument("--version", default="0.5.0")
     a = ap.parse_args()
     out = Path(a.out)
@@ -54,9 +54,9 @@ def main() -> int:
     # .htaccess — bytes, so the LF endings survive on Windows
     (out / ".htaccess").write_bytes((KIT / "site" / "htaccess.template").read_bytes())
 
-    full = f"mot-data-kit-v{a.version}.zip"
+    full = f"mot-metadata-kit-v{a.version}.zip"
     skill = f"mot-metadata-skill-v{a.version}.zip"
-    build_zip(out / "downloads" / full, "mot-data-kit")
+    build_zip(out / "downloads" / full, "mot-metadata-kit")
     build_zip(out / "downloads" / skill, "mot-metadata",
               include=["skills/mot-metadata/", "requirements.txt", "README.md"])
 
@@ -75,7 +75,7 @@ def main() -> int:
         if f.is_file():
             print(f"  {f.relative_to(out).as_posix():42} {round(f.stat().st_size/1024):>6} KB")
     print(f"bundle ready: {out}")
-    print("upload into public_html/metadata-kit/  —  .htaccess FIRST, on its own, then verify anonymously")
+    print("upload into public_html/mot-metadata-kit/  —  .htaccess FIRST, on its own, then verify anonymously")
     return 0
 
 

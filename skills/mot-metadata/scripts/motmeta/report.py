@@ -101,7 +101,7 @@ def render_report(findings: list[dict], summary: dict, meta: Optional[dict] = No
 {''.join(sections) if sections else '<p>לא נמצאו ממצאים.</p>'}
 {todo_html}
 {inv}
-<footer>mot-data-kit · {now}</footer>
+<footer>mot-metadata-kit · {now}</footer>
 </main></body></html>"""
 
 

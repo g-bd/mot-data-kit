@@ -1,4 +1,4 @@
-# mot-data-kit — Python 3.10+.  Manual install is OPTIONAL: mot_metadata.py installs `openpyxl` by itself on first
+# mot-metadata-kit — Python 3.10+.  Manual install is OPTIONAL: mot_metadata.py installs `openpyxl` by itself on first
 # run, and `mot_metadata.py setup` installs the optional ones too.
 openpyxl>=3.1          # required: read/write metadata.xlsx and scan .xlsx data files
 pyshp>=2.3             # optional: shapefile fields / geometry / bbox

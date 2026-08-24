@@ -1,13 +1,16 @@
 {
-  "name": "mot-data-kit",
-  "owner": { "name": "Golan Ben-Dor", "email": "golanbendor@gmail.com" },
+  "name": "mot-metadata-kit",
+  "owner": {
+    "name": "Golan Ben-Dor",
+    "email": "golanbendor@gmail.com"
+  },
   "metadata": {
     "description": "Israel MoT transport-data metadata skills (נוהל הפצת מידע תחבורתי): create, validate, fix and package dataset metadata, with on-board survey and traffic-sensor profiles",
-    "version": "0.5.0"
+    "version": "0.6.0"
   },
   "plugins": [
     {
-      "name": "mot-data-kit",
+      "name": "mot-metadata-kit",
       "source": ".",
       "description": "Create, validate, fix and package Israel MoT dataset metadata (נוהל v1.3) with profiles for on-board surveys (v1.0) and traffic-sensor packages (v1.02). Skills: mot-metadata, mot-onboard, mot-sensors, mot-fix."
     }
