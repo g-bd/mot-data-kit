@@ -1,0 +1,900 @@
+{
+  "Publisher": "משרד התחבורה והבטיחות בדרכים",
+  "Contact": "פליקס שכמן, נתיבי איילון",
+  "Contact Email": "Felixs@ayalonhw.co.il",
+  "Author": "נתיבי איילון",
+  "Title": "פעימה ראשונה (מתוך) של סקר OB במטרופולין תל אביב - 2019-2022",
+  "Description": [
+    "סקר און-בורד מטרופולין תל אביב (2019-2025)  - הסקר שבוצע על ידי נתיבי איילון בשיתוף עם סיגמא 6, כלל פעימה ראשונה בין השנים 2020-2022.",
+    "תוצאות הסקר, המחולקות ל-11 אשכולות שונים, מכילות מידע עשיר ומגוון, הכולל ספירות בתחנות אוטובוס, נתונים על אזורים סטטיסטיים, לוחות דגימה, ספירות נסיעות ומענה לשאלונים.",
+    "כל אלה מבוססים על אזורים סטטיסטיים משנת 2022, שנכללים בפעימה זו. יש לציין, שישנם עוד 4 פעימות הצפויות להפצה וסקרים מאזורים אחרים אשר נארזים להפצה על ידי \"שולחן עגול איסוף מידע\""
+  ],
+  "Keywords": [
+    "on-board survey",
+    "passenger counts",
+    "origin-destination data",
+    "public transport",
+    "bus",
+    "boarding/alighting counts",
+    "travel behavior",
+    "urban",
+    "און-בורד",
+    "סקר נוסעים",
+    "מטרופולין תל אביב",
+    "אוטובוסים",
+    "סקר תחנות"
+  ],
+  "Created": "12/02/2024",
+  "Frequency of update": "המאגר אינו מתעדכן",
+  "Version": "0.8",
+  "Last updated": "06/05/2024",
+  "Contractor": [
+    "Sigma 6"
+  ],
+  "Temporal coverage": "ינואר 2020 - יוני 2022",
+  "Daily periods": [
+    "06:00-09:00",
+    "09:00-15:00",
+    "15:00-19:00",
+    "19:00-00:00"
+  ],
+  "Survey days": "ימי חול (א'-ה')",
+  "Spatial coverage": "מטרופולין תל אביב",
+  "Language": "עברית (תיאורים ושמות יישובים), אנגלית (שמות שדות)",
+  "Vehicle types": [
+    "רגיל",
+    "מפרקי",
+    "מיניבוס"
+  ],
+  "Related documents": [
+    "דוח מסכם סקר נוסעים באוטובוסים מטרופולין גוש דן 2020-2022.pdf",
+    "readme_statistical_areas_2022.pdf"
+  ],
+  "Statistical population": [
+    "נוסעי אוטובוסים בקווי השירות הנכללים ב-11 אשכולות הסקר במטרופולין תל אביב, בימי חול"
+  ],
+  "Survey completeness": "מלא",
+  "Reference area": "מטרופולין תל אביב – 11 אשכולות סקר",
+  "Collection period": "ינואר 2020 – יוני 2022 (פעימה ראשונה; הסקר המלא 2019-2025)",
+  "Sample frame": [
+    "2019_12",
+    "2020_1_3",
+    "2021_4_6",
+    "2021_10",
+    "2021_11_12",
+    "2022_1_3",
+    "2022_4_6"
+  ],
+  "Sampling method": [
+    "דגימת נסיעות מתוך לוחות הזמנים ברישוי של כל תקופה, לפי אשכול, קו, כיוון, תקופת יום וסוג יום; התאמה לתכנית הדגימה בכל תקופת רישוי"
+  ],
+  "Survey method": [
+    "ספירות עולים ויורדים בכל תחנה על ידי סוקרים בנסיעות שנדגמו",
+    "ראיונות נוסעים באוטובוס (שאלון מוצא-יעד ומאפייני הנוסע) בנסיעות שנדגמו"
+  ],
+  "Estimation method": [
+    "מקדמי ניפוח ברמת הנסיעה (trip_weight_factor) לפי לוח הזמנים, ומקדמי ניפוח לשאלונים (quest_weight_factor); פירוט בדוח המסכם"
+  ],
+  "Dataset file": "onboard_tlvm_peima_1.zip",
+  "Files list": [
+    "gtfs_onboard_tlvm_peima_1.zip",
+    "obad.csv",
+    "obod.csv",
+    "statistical_areas_2022.shp",
+    "timetabl.csv",
+    "trips.csv"
+  ],
+  "Size": 145.81,
+  "Metadata creator": "גולן בן-דור, מנהלת תחבורה אשד",
+  "Metadata creation date": "23/08/2026",
+  "Metadata version": "1.1",
+  "Comments": [
+    "גרסה 0.8 מחליפה את גרסה 0.7 (06/05/2024) – תיקון המטא-דאטה לפי נוהל 1.3 ופורמט און-בורד 1.0",
+    "סוג כלי הרכב של התח\"צ לא נכלל בסקר הנ\"ל",
+    "סט הנתונים נוצר לפני פרסום הפורמט האחוד (11/2024) – שמות הקבצים והשדות אינם תואמים במלואם לפורמט 1.0 (timetabl.csv במקום timetable.csv, trip_id_unique במקום trip_index, STAT_2022_* במקום zone_id_*)"
+  ],
+  "Key list": [
+    "timetabl.csv.line_id -> trips.csv.line_id",
+    "trips.csv.trip_id_unique -> obad.csv.trip_id_unique",
+    "trips.csv.trip_id_unique -> obod.csv.trip_id_unique",
+    "obod.csv.STAT_2022_orig -> statistical_areas_2022.shp.YISHUV_STA",
+    "obod.csv.STAT_2022_dest -> statistical_areas_2022.shp.YISHUV_STA"
+  ],
+  "Files": [
+    {
+      "File name": "gtfs_onboard_tlvm_peima_1.zip",
+      "File format": "GTFS (ZIP)",
+      "File description": "תיאור גאוגרפי של קווי הסקר בפורמט GTFS (מסלולים, תחנות, לוחות זמנים) לתקופות הרישוי של הפעימה",
+      "File size": 14.058,
+      "File date": "23/08/2026",
+      "File fields": []
+    },
+    {
+      "File name": "obad.csv",
+      "File format": "CSV",
+      "File description": "טבלת ספירות עולים יורדים וזמני נסיעה",
+      "File size": 43.491,
+      "File date": "23/08/2026",
+      "Data encoding": "Windows-1255",
+      "File fields": [
+        {
+          "Name": "trip_id",
+          "Type": "Integer",
+          "Description": "מפתח נסיעה",
+          "Comments": ""
+        },
+        {
+          "Name": "part",
+          "Type": "text",
+          "Description": "מחובר לtrip id ומרכיב את trip_id_unique",
+          "Comments": ""
+        },
+        {
+          "Name": "trip_id_unique_station",
+          "Type": "Text(key)",
+          "Description": "trip_id_unique+station_index",
+          "Comments": "מקושר לשאלונים, ספירות בתחנה/נסיעה"
+        },
+        {
+          "Name": "trip_id_unique",
+          "Type": "Text(key)",
+          "Description": "קוד נסיעה",
+          "Comments": "מקושר לשאלונים, ספירות בתחנה/נסיעה"
+        },
+        {
+          "Name": "line_id",
+          "Type": "Integer",
+          "Description": "קוד קו",
+          "Comments": ""
+        },
+        {
+          "Name": "direction",
+          "Type": "Integer",
+          "Description": "כיוון",
+          "Comments": ""
+        },
+        {
+          "Name": "alternative",
+          "Type": "Text",
+          "Description": "חלופה",
+          "Comments": ""
+        },
+        {
+          "Name": "cluster",
+          "Type": "Text",
+          "Description": "שם אשכול",
+          "Comments": ""
+        },
+        {
+          "Name": "station_index",
+          "Type": "Integer",
+          "Description": "מספר סידורי של תחנה",
+          "Comments": "בסדר עולה - ניתן לשרטט מסלול קו"
+        },
+        {
+          "Name": "station_id",
+          "Type": "Integer",
+          "Description": "קוד תחנה תואם משרד התחבורה",
+          "Comments": ""
+        },
+        {
+          "Name": "station_name",
+          "Type": "Text",
+          "Description": "שם התחנה",
+          "Comments": ""
+        },
+        {
+          "Name": "stop_time",
+          "Type": "Time",
+          "Description": "שעת עצירה בתחנה",
+          "Comments": "hh:mm; 113451/322812 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "door_closing_time",
+          "Type": "Time",
+          "Description": "שעת סגירת הדלת",
+          "Comments": "hh:mm; 113451/322812 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "latitude",
+          "Type": "Real",
+          "Description": "קו רוחב -תחנה",
+          "Comments": ""
+        },
+        {
+          "Name": "longitude",
+          "Type": "Real",
+          "Description": "קו אורך - תחנה",
+          "Comments": ""
+        },
+        {
+          "Name": "passengers_up",
+          "Type": "Integer",
+          "Description": "מספר נוסעים שעלו",
+          "Comments": ""
+        },
+        {
+          "Name": "passengers_down",
+          "Type": "Integer",
+          "Description": "מספר נוסעים שירדו",
+          "Comments": ""
+        },
+        {
+          "Name": "passengers_continue",
+          "Type": "Integer",
+          "Description": "מספר נוסעים ממשיכים",
+          "Comments": ""
+        },
+        {
+          "Name": "mekadem_nipuach_luz",
+          "Type": "Real",
+          "Description": "מקדם ניפוח לוז",
+          "Comments": ""
+        },
+        {
+          "Name": "passengers_up_menupach",
+          "Type": "Real",
+          "Description": "עולים מנופח",
+          "Comments": ""
+        },
+        {
+          "Name": "passengers_down_menupach",
+          "Type": "Real",
+          "Description": "יורדים מנופח",
+          "Comments": ""
+        },
+        {
+          "Name": "passengers_continue_menupach",
+          "Type": "Real",
+          "Description": "ממשיכים מנופח",
+          "Comments": ""
+        }
+      ]
+    },
+    {
+      "File name": "obod.csv",
+      "File format": "CSV",
+      "File description": "קובץ שאלונים סקר נוסעים",
+      "File size": 37.322,
+      "File date": "23/08/2026",
+      "Data encoding": "Windows-1255",
+      "File fields": [
+        {
+          "Name": "record_id_unique",
+          "Type": "Text(key)",
+          "Description": "קוד נסקר",
+          "Comments": "מזהה רשומה; חלק מהערכים עם סיומת אות (למשל 931842א)"
+        },
+        {
+          "Name": "quest_strt_time",
+          "Type": "Time",
+          "Description": "שעת תחילת הסקירה",
+          "Comments": "hh:mm:ss"
+        },
+        {
+          "Name": "trip_id_unique",
+          "Type": "Text(key)",
+          "Description": "קוד נסיעה",
+          "Comments": ""
+        },
+        {
+          "Name": "orig_activity",
+          "Type": "Text",
+          "Description": "פעילות - מוצא​",
+          "Comments": "בהתאמה לסקר; 1188/110362 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "orig_activity_other",
+          "Type": "Text",
+          "Description": "פירוט פעילות של מי שענה אחר- מוצא",
+          "Comments": "110010/110362 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "SHEM_YISHU_orig",
+          "Type": "Text",
+          "Description": "שם הישוב - מוצא​",
+          "Comments": "589/110362 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "STAT_2022_orig",
+          "Type": "Text",
+          "Description": "מספר אזור סטטיסטי ביישוב - מוצא",
+          "Comments": "1088/110362 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "YISHUV_STA_orig",
+          "Type": "Integer(key)",
+          "Description": "מספר אזור סטטיסטי ייחודי ארצי -  מוצא",
+          "Comments": "",
+          "Values": [
+            {
+              "value": "-1",
+              "label": "חוץ לארץ",
+              "comment": ""
+            },
+            {
+              "value": "-2",
+              "label": "ישובים פלסטיינים",
+              "comment": ""
+            },
+            {
+              "value": "-3",
+              "label": "מחנות צה\"ל ושב\"ס",
+              "comment": ""
+            },
+            {
+              "value": "-4",
+              "label": "לא ידוע",
+              "comment": ""
+            }
+          ]
+        },
+        {
+          "Name": "orig_bus_stop",
+          "Type": "Text",
+          "Description": "תיאור תחנת עלייה",
+          "Comments": "מספר סידורי של תחנה + שם תחנה (מק\"ט תחנה)"
+        },
+        {
+          "Name": "orig_stop_key",
+          "Type": "Text",
+          "Description": "מספר תחנה עליה​",
+          "Comments": ""
+        },
+        {
+          "Name": "orig_stop_lat_lon",
+          "Type": "Text",
+          "Description": "קאורדינטות תחנת אוטובוס - מוצא​",
+          "Comments": "קוארדינטות מופרדות בפסיק"
+        },
+        {
+          "Name": "transprt_from_orig",
+          "Type": "Text",
+          "Description": "אמצעי נסיעה אל תחנת אוטובוס - מוצא​",
+          "Comments": "43/110362 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "transprt_to_orig_other",
+          "Type": "Text",
+          "Description": "מידע משלים לאופן הגעה לתחנה",
+          "Comments": "אם נסקר ענה אחר - מופיע אמצעי הנסיעה אם ענה הגעתי באוטובוס - מופיע מספר קו; 98301/110362 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "dest_bus_stop",
+          "Type": "Text",
+          "Description": "תיאור תחנת ירידה",
+          "Comments": "מספר סידורי של תחנה + שם תחנה (מק\"ט תחנה); 1082/110362 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "dest_bus_stop_other",
+          "Type": "Text",
+          "Description": "מספר סידורי תחנת יעד בפעילות מסוג אחר",
+          "Comments": "110251/110362 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "dest_activity",
+          "Type": "Text",
+          "Description": "פעילות יעד",
+          "Comments": "2315/110362 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "dest_activity_other",
+          "Type": "Text",
+          "Description": "פעילות מחוץ לשאלון  - יעד",
+          "Comments": "109956/110362 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "SHEM_YISHU_dest",
+          "Type": "Text",
+          "Description": "שם הישוב - יעד​",
+          "Comments": "785/110362 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "STAT_2022_dest",
+          "Type": "Integer",
+          "Description": "מספר אזור סטטיסטי ביישוב - יעד",
+          "Comments": "1274/110362 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "YISHUV_STA_dest",
+          "Type": "Integer(key)",
+          "Description": "מספר אזור סטטיסטי ייחודי ארצי -  יעד",
+          "Comments": "",
+          "Values": [
+            {
+              "value": "-1",
+              "label": "חוץ לארץ",
+              "comment": ""
+            },
+            {
+              "value": "-2",
+              "label": "ישובים פלסטיינים",
+              "comment": ""
+            },
+            {
+              "value": "-3",
+              "label": "מחנות צה\"ל ושב\"ס",
+              "comment": ""
+            },
+            {
+              "value": "-4",
+              "label": "לא ידוע",
+              "comment": ""
+            }
+          ]
+        },
+        {
+          "Name": "transport_to_dest",
+          "Type": "Text",
+          "Description": "אמצעי נסיעה אל תחנת אוטובוס - יעד​",
+          "Comments": "26/110362 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "transport_to_dest_other",
+          "Type": "Text",
+          "Description": "אמצעי נסיעה אל תחנת אוטובוס - יעד (שאינו בשאלון)",
+          "Comments": "98934/110362 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "num_buses",
+          "Type": "Text",
+          "Description": "מספר אוטובוסים לכל הנסיעה",
+          "Comments": ""
+        },
+        {
+          "Name": "trip_frequency",
+          "Type": "Text",
+          "Description": "תדירות נסיעה  במסלול זה",
+          "Comments": "1293/110362 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "payment_method",
+          "Type": "Text",
+          "Description": "אמצעי תשלום",
+          "Comments": "2348/110362 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "contract_type",
+          "Type": "Text",
+          "Description": "חוזה תשלום​",
+          "Comments": "11990/110362 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "contract_type_other",
+          "Type": "Text",
+          "Description": "חוזה תשלום​ שאינו בשאלון",
+          "Comments": "109426/110362 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "gender",
+          "Type": "Text",
+          "Description": "מין​",
+          "Comments": "2151/110362 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "employment_status",
+          "Type": "Text",
+          "Description": "מצב תעסוקה",
+          "Comments": "1924/110362 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "employment_status_other",
+          "Type": "Text",
+          "Description": "מצב תעסוקה (שאינו בשאלון)",
+          "Comments": "109732/110362 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "age",
+          "Type": "Text",
+          "Description": "גיל",
+          "Comments": "1299/110362 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "driver_licens",
+          "Type": "Text",
+          "Description": "האם בעל רישיון",
+          "Comments": "5463/110362 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "vehicles_household",
+          "Type": "Integer",
+          "Description": "כלי רכב משק בית​",
+          "Comments": "20322/110362 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "did_trip_prior_to_covid",
+          "Type": "Text",
+          "Description": "האם השתמש בתחבורה ציבורית לפני הקורונה",
+          "Comments": "93251/110362 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "freq_prior_to_covid",
+          "Type": "Text",
+          "Description": "תדירות נסיעה לפני הקורונה",
+          "Comments": "99221/110362 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "freq_due_to_covid",
+          "Type": "Text",
+          "Description": "תדירות נסיעה בגלל הקורונה",
+          "Comments": "93251/110362 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "mekadem_nipuach_quests",
+          "Type": "Real",
+          "Description": "מקדם ניפוח שאלונים",
+          "Comments": ""
+        }
+      ]
+    },
+    {
+      "File name": "statistical_areas_2022.shp",
+      "File format": "Shape",
+      "File description": "שכבה ארצית של האזורים הסטטיסטיים של מפקד 2022 (למ\"ס) – אזורי הסקר לקידוד מוצא ויעד בקובץ השאלונים",
+      "File size": 46.096,
+      "File date": "23/08/2026",
+      "Spatial reference system": "ITM",
+      "Geographic bounding": "[162447.0,627334.4 - 162447.0,627334.4]",
+      "Geographic type": "Polygon",
+      "Zones type": "אזורים סטטיסטיים",
+      "File fields": [
+        {
+          "Name": "OBJECTID",
+          "Type": "Integer(key)",
+          "Description": "מזהה אובייקט פנימי (ESRI)",
+          "Comments": ""
+        },
+        {
+          "Name": "SEMEL_YISH",
+          "Type": "Integer",
+          "Description": "סמל יישוב",
+          "Comments": ""
+        },
+        {
+          "Name": "SHEM_YISHU",
+          "Type": "Text",
+          "Description": "שם יישוב בעברית",
+          "Comments": ""
+        },
+        {
+          "Name": "SHEM_YIS_1",
+          "Type": "Text",
+          "Description": "שם יישוב באנגלית",
+          "Comments": "58/3857 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "STAT_2022",
+          "Type": "Integer",
+          "Description": "מספר אזור סטטיסטי ביישוב",
+          "Comments": ""
+        },
+        {
+          "Name": "YISHUV_STA",
+          "Type": "Integer(key)",
+          "Description": "מספר אזור סטטיסטי ייחודי ארצי (סמל יישוב + מספר אזור) – YISHUV_STAT_2022 קטום ל-10 תווים ב-DBF; מפתח הקישור לשאלונים",
+          "Comments": "מורכב מצירוף סמל היישוב ומספר האזור הסטטיסטי"
+        },
+        {
+          "Name": "ROVA",
+          "Type": "Integer",
+          "Description": "מספר רובע",
+          "Comments": ""
+        },
+        {
+          "Name": "TAT_ROVA",
+          "Type": "Integer",
+          "Description": "מספר תת-רובע",
+          "Comments": ""
+        },
+        {
+          "Name": "COD_TIFKUD",
+          "Type": "Integer",
+          "Description": "קוד תפקודי עיקרי של האזור הסטטיסטי",
+          "Comments": ""
+        },
+        {
+          "Name": "Shape_Leng",
+          "Type": "Real",
+          "Description": "היקף",
+          "Comments": "מטרים"
+        },
+        {
+          "Name": "Shape_Area",
+          "Type": "Real",
+          "Description": "שטח",
+          "Comments": "מ\"ר"
+        },
+        {
+          "Name": "OBJECTID_1",
+          "Type": "Integer",
+          "Description": "מזהה אובייקט פנימי נוסף (ESRI, שכבת מקור)",
+          "Comments": ""
+        },
+        {
+          "Name": "YISHUV_S_1",
+          "Type": "Integer",
+          "Description": "עותק של YISHUV_STAT_2022 (שדה עזר)",
+          "Comments": ""
+        }
+      ]
+    },
+    {
+      "File name": "timetabl.csv",
+      "File format": "CSV",
+      "File description": "לוח זמנים ודגימה תואמת לפעימה ראשונה: הנסיעות בלוחות הזמנים לפי תקופות רישוי, עם מספר הנסיעות שנדגמו",
+      "File size": 0.124,
+      "File date": "23/08/2026",
+      "Data encoding": "Windows-1255",
+      "File fields": [
+        {
+          "Name": "cluster_id",
+          "Type": "Integer",
+          "Description": "קוד אשכול",
+          "Comments": ""
+        },
+        {
+          "Name": "cluster",
+          "Type": "Text",
+          "Description": "שם אשכול",
+          "Comments": ""
+        },
+        {
+          "Name": "line_id",
+          "Type": "Integer",
+          "Description": "קוד קו",
+          "Comments": ""
+        },
+        {
+          "Name": "line",
+          "Type": "Text",
+          "Description": "מספר קו",
+          "Comments": "מספר קו; חלק מהקווים עם סיומת אות (23א)"
+        },
+        {
+          "Name": "direction",
+          "Type": "Integer",
+          "Description": "כיוון",
+          "Comments": ""
+        },
+        {
+          "Name": "alternative",
+          "Type": "Text",
+          "Description": "חלופה",
+          "Comments": ""
+        },
+        {
+          "Name": "day_time_period",
+          "Type": "Text",
+          "Description": "תקופת יום של היציאה",
+          "Comments": "hh:mm_hh:mm"
+        },
+        {
+          "Name": "TripsLuz",
+          "Type": "Integer",
+          "Description": "מספר נסיעות בקובץ trips.csv שנדגמו בקובץ הלו\"ז",
+          "Comments": ""
+        }
+      ]
+    },
+    {
+      "File name": "trips.csv",
+      "File format": "CSV",
+      "File description": "ספירות ברמת נסיעה",
+      "File size": 2.169,
+      "File date": "23/08/2026",
+      "Data encoding": "Windows-1255",
+      "File fields": [
+        {
+          "Name": "index",
+          "Type": "Integer",
+          "Description": "מספר סידורי",
+          "Comments": "חד ערכי בכל; 7/8284 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "trip_id",
+          "Type": "Integer",
+          "Description": "קוד נסיעה",
+          "Comments": "7/8284 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "operator",
+          "Type": "Text",
+          "Description": "מפעיל",
+          "Comments": "דן,אגד וכו; 7/8284 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "trip_id_unique",
+          "Type": "Text(key)",
+          "Description": "קוד נסיעה",
+          "Comments": "7/8284 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "part",
+          "Type": "Text",
+          "Description": "מחובר לtrip id ומרכיב את trip_id_unique",
+          "Comments": "7/8284 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "cluster_id",
+          "Type": "Integer",
+          "Description": "קוד אשכול",
+          "Comments": "7/8284 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "cluster",
+          "Type": "Text",
+          "Description": "שם אשכול",
+          "Comments": "7/8284 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "month_year",
+          "Type": "Text",
+          "Description": "שנת+ חודש דגימה",
+          "Comments": "7/8284 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "sample_plan",
+          "Type": "Text",
+          "Description": "שם/קוד תכנית הדגימה ממנה נדגמה הנסיעה",
+          "Comments": "7/8284 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "day_type",
+          "Type": "Text",
+          "Description": "ימי דגימה",
+          "Comments": "א-ה; 7/8284 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "line_id",
+          "Type": "Integer(key)",
+          "Description": "קוד קו",
+          "Comments": "מקושר למקט קו של משרד התחבורה ולGTFS; 7/8284 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "line",
+          "Type": "Text",
+          "Description": "מספר קו",
+          "Comments": "מספר קו; חלק מהקווים עם סיומת אות (23א); 7/8284 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "day_time_period",
+          "Type": "Text",
+          "Description": "תקופת הדגימה היומית",
+          "Comments": "7/8284 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "direction",
+          "Type": "Integer",
+          "Description": "כיוון",
+          "Comments": "7/8284 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "alternative",
+          "Type": "Text",
+          "Description": "חלופה",
+          "Comments": "7/8284 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "line_info",
+          "Type": "Text",
+          "Description": "מידע על הקו",
+          "Comments": "7/8284 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "trip_strt_time",
+          "Type": "DateTime",
+          "Description": "שעת התחלת הנסיעה",
+          "Comments": "dd:mm:yyyy hh:mm:ss; 7/8284 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "trip_end_time",
+          "Type": "DateTime",
+          "Description": "שעת סיום הנסיעה",
+          "Comments": "dd:mm:yyyy hh:mm:ss; 7/8284 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "trip_total_duration",
+          "Type": "Time",
+          "Description": "סה\"כ זמן נסיעה",
+          "Comments": "hh:mm:ss; 7/8284 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "trip_date",
+          "Type": "Date",
+          "Description": "תאריך נסיעה",
+          "Comments": "dd:mm:yyyy; 7/8284 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "surveyors_required",
+          "Type": "Integer",
+          "Description": "סוקרים דרושים",
+          "Comments": "7/8284 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "surveyors_in_practice",
+          "Type": "Integer",
+          "Description": "סוקרים בפועל",
+          "Comments": "7/8284 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "papers",
+          "Type": "Integer",
+          "Description": "דפים שחולקו",
+          "Comments": "7/8284 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "key_to_use",
+          "Type": "Text",
+          "Description": "תקופת הדגימה + כיוון + חלופה + מספר קו",
+          "Comments": "7/8284 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "mekadem_nipuach_luz",
+          "Type": "Real",
+          "Description": "מקדם ניפוח לוז",
+          "Comments": "7/8284 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "total_up",
+          "Type": "Real",
+          "Description": "מספר עולים לאחר ניפוח",
+          "Comments": "7/8284 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "total_meters",
+          "Type": "Integer",
+          "Description": "מרחק נסיעה בק\"מ",
+          "Comments": "7/8284 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "total_km",
+          "Type": "Real",
+          "Description": "מרחק נסיעה בק\"מ",
+          "Comments": "7/8284 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "total_up_menupach",
+          "Type": "Real",
+          "Description": "מקדם ניפוח עולים",
+          "Comments": "7/8284 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "speed",
+          "Type": "Real",
+          "Description": "מהירות נסיעה",
+          "Comments": "קילומטר לשעה; 7/8284 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "max_continue",
+          "Type": "Real",
+          "Description": "מספר ממשיכים מקסימלי",
+          "Comments": "7/8284 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "average_passes",
+          "Type": "Real",
+          "Description": "מספר נוסעים ממוצע",
+          "Comments": "253/8284 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "Hour",
+          "Type": "Time",
+          "Description": "שעת היציאה (שעה שלמה)",
+          "Comments": "hh:mm:ss; 7/8284 ערכים חסרים במדגם"
+        }
+      ]
+    }
+  ],
+  "_meta": {
+    "guideline_version": "1.3",
+    "metadata_version": "1.1",
+    "profile": "onboard",
+    "profile_version": "1.0",
+    "dataset_kind": "survey",
+    "survey_block": true,
+    "generated": "23/08/2026 19:23",
+    "folder": "G:\\golan\\work\\consultant\\dev\\eshed\\projects\\metadatavalidor-skill\\test\\ob_tlvm_peima1_ver0.8",
+    "todo": [],
+    "auto_keys": []
+  }
+}

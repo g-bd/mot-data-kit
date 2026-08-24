@@ -1,0 +1,315 @@
+{
+  "Publisher": "TODO",
+  "Contact": "TODO",
+  "Title": "נתוני גלאי תנועה בפורמט אחוד – 05/2026",
+  "Description": [
+    "TODO"
+  ],
+  "Keywords": [
+    "traffic detectors",
+    "traffic counts",
+    "traffic volumes",
+    "inter-urban",
+    "roads",
+    "vehicle classification",
+    "existing data",
+    "גלאי תנועה",
+    "ספירות תנועה",
+    "סל הספירות הלאומי"
+  ],
+  "Created": "23/08/2026",
+  "Frequency of update": "חודשי",
+  "Version": "1.0",
+  "Last updated": "23/08/2026",
+  "Temporal coverage": "01/05/2026 - 31/05/2026",
+  "Spatial coverage": "ארצי – רשת הדרכים הבין-עירונית (נתיבי ישראל)",
+  "Language": "עברית",
+  "Dataset file": "SensorDataSal_260501_260531.zip",
+  "Files list": [
+    "SensorDataSal_260501_260531.zip",
+    "SensorDataSal_260501_260531.zip/SensorDataSal_260501_260531_table1.csv",
+    "SensorDataSal_260501_260531.zip/SensorDataSal_260501_260531_table2.csv",
+    "SensorDataSal_260501_260531.zip/SensorDataSal_260501_260531_table3.csv"
+  ],
+  "Size": 6.06,
+  "Metadata creation date": "23/08/2026",
+  "Metadata version": "1.1",
+  "Key list": [
+    "SensorDataSal_260501_260531.zip/SensorDataSal_260501_260531_table2.csv.קוד גלאי -> SensorDataSal_260501_260531.zip/SensorDataSal_260501_260531_table3.csv.קוד גלאי"
+  ],
+  "Files": [
+    {
+      "File name": "SensorDataSal_260501_260531.zip",
+      "File format": "ZIP",
+      "File description": "קובץ אצווה חודשי SensorDataSal_<from>_<to>.zip המכיל את שלוש טבלאות הפורמט (תקופת ספירה, רשימת גלאים, ספירות שעתיות)",
+      "File size": 5.837,
+      "File date": "23/08/2026",
+      "File fields": []
+    },
+    {
+      "File name": "SensorDataSal_260501_260531.zip/SensorDataSal_260501_260531_table1.csv",
+      "File format": "CSV",
+      "File comments": "בתוך הארכיון SensorDataSal_260501_260531.zip",
+      "File description": "שורה אחת לקובץ חודשי: מסגרת הזמן, בסיס הזמן (60 דק'), קודי סוגי רכב 1–5 וגרסת הפורמט",
+      "Data encoding": "Windows-1255",
+      "File fields": [
+        {
+          "Name": "מתאריך",
+          "Type": "Date",
+          "Description": "התחלת תקופת הספירה החודשית – תאריך",
+          "Comments": "dd/mm/yyyy"
+        },
+        {
+          "Name": "משעה",
+          "Type": "Time",
+          "Description": "התחלת תקופת הספירה – שעה",
+          "Comments": "hh:mm"
+        },
+        {
+          "Name": "לתאריך",
+          "Type": "Date",
+          "Description": "סיום תקופת הספירה – תאריך",
+          "Comments": "dd/mm/yyyy"
+        },
+        {
+          "Name": "לשעה",
+          "Type": "Time",
+          "Description": "סיום תקופת הספירה – שעה",
+          "Comments": "hh:mm"
+        },
+        {
+          "Name": "תקופה דק",
+          "Type": "Integer",
+          "Description": "בסיס הזמן של נתוני הפלט בדקות (60 = ספירה שעתית)",
+          "Comments": ""
+        },
+        {
+          "Name": "סוג רכב 1",
+          "Type": "Text",
+          "Description": "הגדרת קוד סוג רכב 1",
+          "Comments": "דו גלגלי"
+        },
+        {
+          "Name": "סוג רכב 2",
+          "Type": "Text",
+          "Description": "הגדרת קוד סוג רכב 2",
+          "Comments": "פרטי"
+        },
+        {
+          "Name": "סוג רכב 3",
+          "Type": "Text",
+          "Description": "הגדרת קוד סוג רכב 3",
+          "Comments": "מסחרי"
+        },
+        {
+          "Name": "סוג רכב 4",
+          "Type": "Text",
+          "Description": "הגדרת קוד סוג רכב 4",
+          "Comments": "משאית/אוטובוס"
+        },
+        {
+          "Name": "סוג רכב 5",
+          "Type": "Text",
+          "Description": "הגדרת קוד סוג רכב 5",
+          "Comments": "משאית כבדה"
+        },
+        {
+          "Name": "גרסת פורמט",
+          "Type": "Text",
+          "Description": "גרסת הפורמט לתאימות מבנה הקבצים",
+          "Comments": ""
+        }
+      ]
+    },
+    {
+      "File name": "SensorDataSal_260501_260531.zip/SensorDataSal_260501_260531_table2.csv",
+      "File format": "CSV",
+      "File comments": "בתוך הארכיון SensorDataSal_260501_260531.zip",
+      "File description": "שורה לכל גלאי פעיל בתקופת הדיווח: מיקום לינארי וגאוגרפי, סוג גלאי והגדרת הזרועות (זרוע 1 במעלה הדרך, זרוע 2 במורד)",
+      "Data encoding": "Windows-1255",
+      "File fields": [
+        {
+          "Name": "קוד גלאי",
+          "Type": "Text(key)",
+          "Description": "מזהה ייחודי של הגלאי במערכת ניהול התנועה",
+          "Comments": ""
+        },
+        {
+          "Name": "מספר דרך מקום הצבה",
+          "Type": "Integer",
+          "Description": "מספר הדרך בה מוצב הגלאי",
+          "Comments": ""
+        },
+        {
+          "Name": "קמ מקום הצבה",
+          "Type": "Real",
+          "Description": "ק\"מ מקום הצבת הגלאי (מיקום לינארי על ציר הדרך)",
+          "Comments": ""
+        },
+        {
+          "Name": "קואורדינטות",
+          "Type": "Text",
+          "Description": "מיקום גאוגרפי של הגלאי במערכת WGS84",
+          "Comments": "POINT(lon lat)"
+        },
+        {
+          "Name": "ITM קואורדינטות",
+          "Type": "Text",
+          "Description": "מיקום גאוגרפי של הגלאי ברשת ישראל החדשה (ITM / EPSG:2039)",
+          "Comments": "X,Y"
+        },
+        {
+          "Name": "סוג גלאי",
+          "Type": "Text",
+          "Description": "מכ\"ם / מצלמה / לולאה וכדומה",
+          "Comments": ""
+        },
+        {
+          "Name": "תיאור זרוע צומת 1",
+          "Type": "Text",
+          "Description": "שם הצומת/מחלף הקרוב ביותר לגלאי במעלה הדרך (זרוע 1)",
+          "Comments": "10/589 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "זרוע 1 קמ",
+          "Type": "Real",
+          "Description": "הק\"מ של זרוע 1",
+          "Comments": "9/589 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "מספר נתיבים זרוע 1",
+          "Type": "Integer",
+          "Description": "מספר נתיבים בזרוע 1",
+          "Comments": ""
+        },
+        {
+          "Name": "תיאור זרוע צומת 2",
+          "Type": "Text",
+          "Description": "שם הצומת/מחלף הקרוב ביותר לגלאי במורד הדרך (זרוע 2)",
+          "Comments": "24/589 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "זרוע 2 קמ",
+          "Type": "Real",
+          "Description": "הק\"מ של זרוע 2",
+          "Comments": "19/589 ערכים חסרים במדגם"
+        },
+        {
+          "Name": "מספר נתיבים זרוע 2",
+          "Type": "Integer",
+          "Description": "מספר נתיבים בזרוע 2",
+          "Comments": ""
+        }
+      ]
+    },
+    {
+      "File name": "SensorDataSal_260501_260531.zip/SensorDataSal_260501_260531_table3.csv",
+      "File format": "CSV",
+      "File comments": "בתוך הארכיון SensorDataSal_260501_260531.zip",
+      "File description": "נפח תנועה שעתי לכל גלאי, שורה אחת לכל גלאי-שעה עם שתי קבוצות ערכים: כיוון 1 (מזרוע 1 לזרוע 2) וכיוון 2 (מזרוע 2 לזרוע 1); שעה חלקית = NA",
+      "Data encoding": "Windows-1255",
+      "File fields": [
+        {
+          "Name": "קוד גלאי",
+          "Type": "Text(key)",
+          "Description": "קוד הגלאי בהתאם לטבלה 2",
+          "Comments": ""
+        },
+        {
+          "Name": "תאריך",
+          "Type": "Date",
+          "Description": "תאריך יום הספירה",
+          "Comments": "dd/mm/yyyy"
+        },
+        {
+          "Name": "משעה",
+          "Type": "Time",
+          "Description": "תחילת השעה הנספרת",
+          "Comments": "hh:mm"
+        },
+        {
+          "Name": "לשעה",
+          "Type": "Time",
+          "Description": "סיום השעה הנספרת",
+          "Comments": "hh:mm"
+        },
+        {
+          "Name": "מזרוע 1 לזרוע 2-סוג רכב 1",
+          "Type": "Integer",
+          "Description": "נפח כיוון 1 – דו גלגלי",
+          "Comments": "NA = אין נתון (שעה חלקית)"
+        },
+        {
+          "Name": "מזרוע 1 לזרוע 2-סוג רכב 2",
+          "Type": "Integer",
+          "Description": "נפח כיוון 1 – פרטי",
+          "Comments": "NA = אין נתון"
+        },
+        {
+          "Name": "מזרוע 1 לזרוע 2-סוג רכב 3",
+          "Type": "Integer",
+          "Description": "נפח כיוון 1 – מסחרי",
+          "Comments": "NA = אין נתון"
+        },
+        {
+          "Name": "מזרוע 1 לזרוע 2-סוג רכב 4",
+          "Type": "Integer",
+          "Description": "נפח כיוון 1 – משאית/אוטובוס",
+          "Comments": "NA = אין נתון"
+        },
+        {
+          "Name": "מזרוע 1 לזרוע 2-סוג רכב 5",
+          "Type": "Integer",
+          "Description": "נפח כיוון 1 – משאית כבדה",
+          "Comments": "NA = אין נתון"
+        },
+        {
+          "Name": "מזרוע 2 לזרוע 1-סוג רכב 1",
+          "Type": "Integer",
+          "Description": "נפח כיוון 2 – דו גלגלי",
+          "Comments": "NA = אין נתון"
+        },
+        {
+          "Name": "מזרוע 2 לזרוע 1-סוג רכב 2",
+          "Type": "Integer",
+          "Description": "נפח כיוון 2 – פרטי",
+          "Comments": "NA = אין נתון"
+        },
+        {
+          "Name": "מזרוע 2 לזרוע 1-סוג רכב 3",
+          "Type": "Integer",
+          "Description": "נפח כיוון 2 – מסחרי",
+          "Comments": "NA = אין נתון"
+        },
+        {
+          "Name": "מזרוע 2 לזרוע 1-סוג רכב 4",
+          "Type": "Integer",
+          "Description": "נפח כיוון 2 – משאית/אוטובוס",
+          "Comments": "NA = אין נתון"
+        },
+        {
+          "Name": "מזרוע 2 לזרוע 1-סוג רכב 5",
+          "Type": "Integer",
+          "Description": "נפח כיוון 2 – משאית כבדה",
+          "Comments": "NA = אין נתון"
+        }
+      ]
+    }
+  ],
+  "_meta": {
+    "guideline_version": "1.3",
+    "metadata_version": "1.1",
+    "profile": "sensors",
+    "profile_version": "1.02",
+    "dataset_kind": "monitoring",
+    "survey_block": false,
+    "generated": "23/08/2026 19:16",
+    "folder": "G:\\golan\\work\\consultant\\dev\\eshed\\projects\\metadatavalidor-skill\\test\\sensors_2605",
+    "todo": [
+      "Publisher",
+      "Contact",
+      "Description"
+    ],
+    "auto_keys": []
+  }
+}

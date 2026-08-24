@@ -1,0 +1,18 @@
+{
+  "name": "mot-data-kit",
+  "version": "0.5.0",
+  "description": "Create, validate, fix and package Israel MoT dataset metadata (נוהל הפצת מידע תחבורתי v1.3) with domain profiles for on-board surveys (v1.0) and traffic-sensor packages (v1.02). Skills: mot-metadata, mot-onboard, mot-sensors, mot-fix.",
+  "author": {
+    "name": "Golan Ben-Dor (Eshed)",
+    "email": "golanbendor@gmail.com"
+  },
+  "keywords": [
+    "metadata",
+    "israel",
+    "ministry of transport",
+    "data distribution",
+    "on-board survey",
+    "traffic sensors",
+    "hebrew"
+  ]
+}

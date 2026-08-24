@@ -1,0 +1,536 @@
+{
+  "profile": null,
+  "dataset_kind": "monitoring",
+  "dataset_name": "national_agg_2607",
+  "exclude": [
+    "national_20260701_20260731_package.zip",
+    "run_config.json",
+    "scan.json",
+    "maps/maps_provenance.json"
+  ],
+  "header": {
+    "Publisher": "משרד התחבורה והבטיחות בדרכים – אגף בכיר תכנון תחבורתי",
+    "Contact": "גולן בן-דור, אשד מהנדסים ויועצים",
+    "Contact Email": "golanbendor@gmail.com",
+    "Author": "אשד מהנדסים ויועצים (עבור שולחן עגול איסוף מידע)",
+    "Title": "זמני נסיעה ומהירויות מצטברים ברשת הדרכים הארצית – יולי 2026 (Google Maps Link Monitor)",
+    "Description": [
+      "נתוני ניטור זמני נסיעה של קטעי דרך (links) ברשת הדרכים הבין-עירונית (בסיס למ\"ס v_260112), שנאספו ממקור Google Maps Routes באמצעות מערכת Google Maps Link Monitor v2 של אשד, בחודש יולי 2026.",
+      "הנתונים עברו בקרת תקינות (control version 01_08_26_06_31) ואוגרגו לרמה שעתית לכל קטע, ולפרופיל יומי ממוצע לפי סוג יום (חול / סוף שבוע / חג). ימים מיוחדים מתועדים ב-special_days.csv ומדדי שלמות לכל קטע ב-quality_by_link.csv.",
+      "הנתונים מתארים זמן נסיעה, מרחק ומהירות ממוצעים – לא נפחי תנועה.",
+      "התיקייה maps מכילה את שכבת הקטעים (basemap v_260112, EPSG:2039) שעליה נמדדו זמני הנסיעה – השדה Name בשכבה זהה ל-link_id בקבצי האגרגציה – ואת שכבת המקור של למ\"ס (RASHIT_EZORIT v_251127) שממנה נבנה ה-basemap."
+    ],
+    "Keywords": [
+      "travel times",
+      "speed",
+      "existing data",
+      "inter-urban",
+      "roads",
+      "national",
+      "traffic",
+      "זמני נסיעה",
+      "מהירויות",
+      "רשת ארצית"
+    ],
+    "Created": "01/08/2026",
+    "Frequency of update": "חודשי",
+    "Version": "1.0",
+    "Last updated": "01/08/2026",
+    "Temporal coverage": "01/07/2026 - 31/07/2026, כל שעות היממה, כל ימות השבוע",
+    "Spatial coverage": "ארצי – רשת הדרכים הבין-עירונית (2,426 קטעים מכווניים, basemap v_260112 על בסיס שכבת למ\"ס v_251127), EPSG:2039",
+    "Language": "אנגלית (שמות שדות), עברית (שמות חגים)",
+    "Related documents": [
+      "README.md",
+      "README.html",
+      "processing_log.txt",
+      "run_config.json",
+      "maps/README.md",
+      "maps/basemap/README.md",
+      "maps/source_map/README.md",
+      "maps/maps_provenance.json"
+    ],
+    "References": [
+      "https://www.gov.il/he/pages/data_distribution"
+    ],
+    "Legal constrains": [
+      "הנתונים נגזרים משירות Google Maps Routes API – השימוש כפוף לתנאי Google Maps Platform; אין להפיץ לצד שלישי ללא אישור משרד התחבורה"
+    ],
+    "Data quality": "נתונים דגומים (עד 4 תצפיות לשעה לכל קטע); שעות ללא תצפית תקינה אינן מופיעות (sparse); ראה quality_by_link.csv למדדי שלמות",
+    "Metadata creator": "גולן בן-דור, אשד מהנדסים ויועצים",
+    "Comments": [
+      "גרסה 1.0 – הפצה ראשונה של חודש יולי 2026; ההפצה החודשית הקודמת (יוני 2026) היא סט נתונים נפרד"
+    ]
+  },
+  "files": {
+    "hourly_agg.csv.gz": {
+      "File description": "אגרגציה שעתית לכל קטע דרך: זמן נסיעה, מרחק ומהירות ממוצעים לכל שעה ביולי 2026 (שורות רק לשעות עם נתונים)",
+      "fields": {
+        "link_id": {
+          "Description": "מזהה קטע דרך (למ\"ס) – מקשר לבסיס המפה v_260112",
+          "Type": "Text(key)",
+          "Comments": "לדוגמה S_1000_26"
+        },
+        "date": {
+          "Description": "תאריך",
+          "Type": "Date",
+          "Comments": "yyyy-mm-dd"
+        },
+        "hour_of_day": {
+          "Description": "שעה ביממה (תחילת השעה)",
+          "Comments": "0-23"
+        },
+        "daytype": {
+          "Description": "קוד סוג יום",
+          "Values": [
+            {
+              "value": "1",
+              "label": "יום חול"
+            },
+            {
+              "value": "2",
+              "label": "סוף שבוע"
+            },
+            {
+              "value": "3",
+              "label": "חג"
+            },
+            {
+              "value": "4",
+              "label": "אירוע (לשעות האירוע בלבד)"
+            }
+          ]
+        },
+        "total_observations": {
+          "Description": "מספר תצפיות בשעה (גודל מדגם, 1-4 לנתוני 15 דקות)"
+        },
+        "avg_dur": {
+          "Description": "זמן נסיעה ממוצע",
+          "Comments": "שניות, 2 ספרות אחרי הנקודה"
+        },
+        "std_dur": {
+          "Description": "סטיית תקן של זמן הנסיעה",
+          "Comments": "שניות"
+        },
+        "avg_static_dur": {
+          "Description": "זמן נסיעה סטטי ממוצע (ללא עומס)",
+          "Comments": "שניות"
+        },
+        "std_static_dur": {
+          "Description": "סטיית תקן של הזמן הסטטי",
+          "Comments": "שניות"
+        },
+        "avg_dist": {
+          "Description": "מרחק נסיעה ממוצע",
+          "Comments": "מטרים"
+        },
+        "avg_speed": {
+          "Description": "מהירות ממוצעת",
+          "Comments": "קמ\"ש, ספרה אחת אחרי הנקודה"
+        }
+      }
+    },
+    "avg_daily_profile.csv.gz": {
+      "File description": "פרופיל יומי ממוצע לכל קטע: ממוצע לכל שעה ביממה על פני כל ימי התקופה, לפי סוג יום",
+      "fields": {
+        "link_id": {
+          "Description": "מזהה קטע דרך (למ\"ס)",
+          "Type": "Text",
+          "Comments": "לדוגמה S_1000_26"
+        },
+        "hour_of_day": {
+          "Description": "שעה ביממה",
+          "Comments": "0-23"
+        },
+        "daytype": {
+          "Description": "קוד סוג יום",
+          "Values": [
+            {
+              "value": "1",
+              "label": "יום חול"
+            },
+            {
+              "value": "2",
+              "label": "סוף שבוע"
+            },
+            {
+              "value": "3",
+              "label": "חג"
+            },
+            {
+              "value": "4",
+              "label": "אירוע"
+            }
+          ]
+        },
+        "avg_observations_per_hour": {
+          "Description": "ממוצע תצפיות לשעה על פני כל הימים"
+        },
+        "total_observations": {
+          "Description": "סך התצפיות התקינות על פני כל הימים"
+        },
+        "avg_dur": {
+          "Description": "זמן נסיעה ממוצע לשעה זו על פני כל הימים",
+          "Comments": "שניות"
+        },
+        "std_dur": {
+          "Description": "סטיית תקן מאוחדת של זמן הנסיעה",
+          "Comments": "שניות"
+        },
+        "avg_static_dur": {
+          "Description": "זמן נסיעה סטטי ממוצע",
+          "Comments": "שניות"
+        },
+        "std_static_dur": {
+          "Description": "סטיית תקן של הזמן הסטטי",
+          "Comments": "שניות"
+        },
+        "avg_dist": {
+          "Description": "מרחק ממוצע",
+          "Comments": "מטרים"
+        },
+        "avg_speed": {
+          "Description": "מהירות ממוצעת",
+          "Comments": "קמ\"ש"
+        },
+        "n_days": {
+          "Description": "מספר ימים עם נתונים תקינים לשעה זו"
+        }
+      }
+    },
+    "quality_by_link.csv": {
+      "File description": "מדדי שלמות וכיסוי לכל קטע ברשת (כולל קטעים ללא נתונים)",
+      "fields": {
+        "link_id": {
+          "Description": "מזהה קטע דרך (למ\"ס)",
+          "Type": "Text(key)"
+        },
+        "expected_observations": {
+          "Description": "מספר תצפיות צפוי בתקופה"
+        },
+        "actual_observations": {
+          "Description": "מספר תצפיות שהתקבלו בפועל"
+        },
+        "observation_completeness_percent": {
+          "Description": "שלמות תצפיות (בפועל/צפוי × 100)",
+          "Comments": "אחוזים"
+        },
+        "expected_hours": {
+          "Description": "מספר שעות צפוי בטווח התאריכים"
+        },
+        "hours_with_data": {
+          "Description": "שעות עם נתונים"
+        },
+        "hours_dropped": {
+          "Description": "שעות חסרות (צפוי פחות בפועל)"
+        },
+        "hours_coverage_percent": {
+          "Description": "כיסוי שעות (בפועל/צפוי × 100)",
+          "Comments": "אחוזים"
+        },
+        "days_covered": {
+          "Description": "מספר ימים ייחודיים עם נתונים"
+        }
+      }
+    },
+    "special_days.csv": {
+      "File description": "ימים מיוחדים בתקופה (חגים ואירועים) – המקום היחיד בו מופיעים שמות החגים/האירועים",
+      "fields": {
+        "date": {
+          "Description": "תאריך",
+          "Comments": "yyyy-mm-dd"
+        },
+        "daytype": {
+          "Description": "סוג יום אפקטיבי ליום השלם",
+          "Values": [
+            {
+              "value": "1",
+              "label": "יום חול"
+            },
+            {
+              "value": "2",
+              "label": "סוף שבוע"
+            },
+            {
+              "value": "3",
+              "label": "חג"
+            },
+            {
+              "value": "4",
+              "label": "אירוע"
+            }
+          ]
+        },
+        "holiday_name": {
+          "Description": "שם החג (מופרד ב-| כשיש כמה)"
+        },
+        "event_name": {
+          "Description": "שם האירוע ממאגר האירועים"
+        },
+        "event_type": {
+          "Description": "סוג האירוע (war/marathon/concert/...)"
+        },
+        "event_time_window": {
+          "Description": "חלון זמן לאירוע תחום בזמן",
+          "Comments": "HH:MM-HH:MM, ריק לחג של יום שלם"
+        }
+      }
+    },
+    "maps/basemap/v_260112_basemap.zip": {
+      "File description": "שכבת הקטעים המכווניים (basemap v_260112) שעליהם נמדדו זמני הנסיעה; כל כביש דו-כיווני מופיע פעמיים (קטע לכל כיוון). השדה Name = link_id בקבצי האגרגציה. נבנה משכבת למ\"ס v_251127 לאחר עדכוני מפה ובקרת שדה (ראה maps/basemap/README.md)",
+      "Spatial coverage": "ארצי – רשת הדרכים הבין-עירונית",
+      "fields": {
+        "Name": {
+          "Description": "מזהה קטע מכווני S_<KetaID>_<azimuth>; זהה ל-link_id בקבצי האגרגציה",
+          "Type": "Text(key)"
+        },
+        "wp1_lat": {
+          "Description": "נקודת מעבר 1 – קו רוחב (WGS84) המאלצת את מסלול Google; ריק כשאין נקודת מעבר",
+          "Comments": "WGS84, ריק = אין"
+        },
+        "wp1_lon": {
+          "Description": "נקודת מעבר 1 – קו אורך (WGS84)",
+          "Comments": "WGS84, ריק = אין"
+        },
+        "wp2_lat": {
+          "Description": "נקודת מעבר 2 – קו רוחב (WGS84) המאלצת את מסלול Google; ריק כשאין נקודת מעבר",
+          "Comments": "WGS84, ריק = אין"
+        },
+        "wp2_lon": {
+          "Description": "נקודת מעבר 2 – קו אורך (WGS84)",
+          "Comments": "WGS84, ריק = אין"
+        },
+        "wp3_lat": {
+          "Description": "נקודת מעבר 3 – קו רוחב (WGS84) המאלצת את מסלול Google; ריק כשאין נקודת מעבר",
+          "Comments": "WGS84, ריק = אין"
+        },
+        "wp3_lon": {
+          "Description": "נקודת מעבר 3 – קו אורך (WGS84)",
+          "Comments": "WGS84, ריק = אין"
+        },
+        "wp4_lat": {
+          "Description": "נקודת מעבר 4 – קו רוחב (WGS84) המאלצת את מסלול Google; ריק כשאין נקודת מעבר",
+          "Comments": "WGS84, ריק = אין"
+        },
+        "wp4_lon": {
+          "Description": "נקודת מעבר 4 – קו אורך (WGS84)",
+          "Comments": "WGS84, ריק = אין"
+        },
+        "wp5_lat": {
+          "Description": "נקודת מעבר 5 – קו רוחב (WGS84) המאלצת את מסלול Google; ריק כשאין נקודת מעבר",
+          "Comments": "WGS84, ריק = אין"
+        },
+        "wp5_lon": {
+          "Description": "נקודת מעבר 5 – קו אורך (WGS84)",
+          "Comments": "WGS84, ריק = אין"
+        },
+        "wp6_lat": {
+          "Description": "נקודת מעבר 6 – קו רוחב (WGS84) המאלצת את מסלול Google; ריק כשאין נקודת מעבר",
+          "Comments": "WGS84, ריק = אין"
+        },
+        "wp6_lon": {
+          "Description": "נקודת מעבר 6 – קו אורך (WGS84)",
+          "Comments": "WGS84, ריק = אין"
+        },
+        "wp7_lat": {
+          "Description": "נקודת מעבר 7 – קו רוחב (WGS84) המאלצת את מסלול Google; ריק כשאין נקודת מעבר",
+          "Comments": "WGS84, ריק = אין"
+        },
+        "wp7_lon": {
+          "Description": "נקודת מעבר 7 – קו אורך (WGS84)",
+          "Comments": "WGS84, ריק = אין"
+        },
+        "wp8_lat": {
+          "Description": "נקודת מעבר 8 – קו רוחב (WGS84) המאלצת את מסלול Google; ריק כשאין נקודת מעבר",
+          "Comments": "WGS84, ריק = אין"
+        },
+        "wp8_lon": {
+          "Description": "נקודת מעבר 8 – קו אורך (WGS84)",
+          "Comments": "WGS84, ריק = אין"
+        },
+        "wp9_lat": {
+          "Description": "נקודת מעבר 9 – קו רוחב (WGS84) המאלצת את מסלול Google; ריק כשאין נקודת מעבר",
+          "Comments": "WGS84, ריק = אין"
+        },
+        "wp9_lon": {
+          "Description": "נקודת מעבר 9 – קו אורך (WGS84)",
+          "Comments": "WGS84, ריק = אין"
+        },
+        "wp10_lat": {
+          "Description": "נקודת מעבר 10 – קו רוחב (WGS84) המאלצת את מסלול Google; ריק כשאין נקודת מעבר",
+          "Comments": "WGS84, ריק = אין"
+        },
+        "wp10_lon": {
+          "Description": "נקודת מעבר 10 – קו אורך (WGS84)",
+          "Comments": "WGS84, ריק = אין"
+        }
+      }
+    },
+    "maps/basemap/v_260112_a_b.xlsx": {
+      "File description": "טבלת A-B של ה-basemap: לכל קטע נקודת התחלה וסיום (WGS84) ונקודות מעבר שנשלחו ל-Google Routes",
+      "fields": {
+        "שם מקטע": {
+          "Description": "מזהה קטע מכווני (= Name בשכבת ה-basemap)",
+          "Type": "Text(key)"
+        },
+        "אופן": {
+          "Description": "קוד אופן תחבורה לשאילתת Google",
+          "Values": [
+            {
+              "value": "0",
+              "label": "רכב פרטי (driving)"
+            }
+          ]
+        },
+        "נקודת התחלה": {
+          "Description": "קואורדינטת התחלה lat,lon",
+          "Comments": "WGS84"
+        },
+        "נקודת סיום": {
+          "Description": "קואורדינטת סיום lat,lon",
+          "Comments": "WGS84"
+        },
+        "נקודת מעבר 1": {
+          "Description": "נקודת מעבר 1 lat,lon (ריק = אין)",
+          "Comments": "WGS84"
+        },
+        "נקודת מעבר 2": {
+          "Description": "נקודת מעבר 2 lat,lon (ריק = אין)",
+          "Comments": "WGS84"
+        }
+      }
+    },
+    "maps/basemap/rejected/v_260112_rejected_links.xlsx": {
+      "File description": "קטעים שנבדקו ונדחו בבניית ה-basemap (אינם נושאים מדידות) – לתיעוד בלבד",
+      "fields": {
+        "שם מקטע": {
+          "Description": "מזהה קטע מכווני שנדחה",
+          "Type": "Text(key)"
+        },
+        "נקודת התחלה": {
+          "Description": "קואורדינטת התחלה lat,lon",
+          "Comments": "WGS84"
+        },
+        "נקודת סיום": {
+          "Description": "קואורדינטת סיום lat,lon",
+          "Comments": "WGS84"
+        },
+        "סיבת דחייה": {
+          "Description": "סיבת הדחייה",
+          "Values": [
+            {
+              "value": "Rejected - Road is not yet updated",
+              "label": "הכביש טרם עודכן במפת Google"
+            },
+            {
+              "value": "Rejected - Could not find a route",
+              "label": "לא נמצא מסלול"
+            }
+          ]
+        }
+      }
+    },
+    "maps/source_map/v_251127_RASHIT_EZORIT.zip": {
+      "File description": "שכבת צירי הדרכים הארצית של למ\"ס (RASHIT_EZORIT), מהדורת v_251127 (27/11/2025) – שכבת המקור שממנה נבנה ה-basemap; מצורפת לשחזור השושלת (ראה maps/source_map/README.md)",
+      "fields": {
+        "OBJECTID": {
+          "Description": "מזהה אובייקט פנימי (ESRI)",
+          "Type": "Integer(key)"
+        },
+        "KetaID": {
+          "Description": "מזהה קטע דרך בשכבת למ\"ס (ללא כיוון)",
+          "Type": "Integer"
+        },
+        "SemelTsome": {
+          "Description": "סמל צומת התחלה"
+        },
+        "SemelTso_1": {
+          "Description": "סמל צומת סיום"
+        },
+        "KilometerM": {
+          "Description": "ק\"מ התחלה על ציר הדרך",
+          "Comments": "ק\"מ"
+        },
+        "KilometerA": {
+          "Description": "ק\"מ סיום על ציר הדרך",
+          "Comments": "ק\"מ"
+        },
+        "IsLoIrony": {
+          "Description": "דגל קטע לא-עירוני",
+          "Values": [
+            {
+              "value": "1",
+              "label": "לא עירוני"
+            },
+            {
+              "value": "0",
+              "label": "עירוני / לא מסומן"
+            }
+          ]
+        },
+        "MspKvutza": {
+          "Description": "מספר קבוצה (לא בשימוש במהדורה זו – 0)"
+        },
+        "KetaSinonu": {
+          "Description": "קטע סינון (לא בשימוש – 0)"
+        },
+        "KetaIDLifn": {
+          "Description": "מזהה קטע קודם (לא בשימוש – 0)"
+        },
+        "SemelYishu": {
+          "Description": "סמל יישוב (לא בשימוש – 0)"
+        },
+        "SemelRecho": {
+          "Description": "סמל רחוב (לא בשימוש – 0)"
+        },
+        "TaarichPit": {
+          "Description": "תאריך פתיחה (ריק במהדורה זו)"
+        },
+        "TaarichPti": {
+          "Description": "תאריך פתיחה לתנועה (ריק)"
+        },
+        "TaarichIdk": {
+          "Description": "תאריך עדכון (ריק)"
+        },
+        "TaarichSgi": {
+          "Description": "תאריך סגירה (ריק)"
+        },
+        "Tachbura_S": {
+          "Description": "תחבורה – שדה עזר (לא בשימוש – 0)"
+        },
+        "Tachbura_M": {
+          "Description": "תחבורה – שדה עזר (לא בשימוש – 0)"
+        },
+        "Tachbura_1": {
+          "Description": "תחבורה – שדה עזר (לא בשימוש – 0)"
+        },
+        "MisparKvis": {
+          "Description": "מספר כביש"
+        },
+        "KMfrom": {
+          "Description": "ק\"מ מ- (לא בשימוש – 0)"
+        },
+        "KMTo": {
+          "Description": "ק\"מ עד (לא בשימוש – 0)"
+        },
+        "Shape_STLe": {
+          "Description": "אורך הצורה (שדה ESRI ישן)",
+          "Comments": "מטרים"
+        },
+        "Shape_Leng": {
+          "Description": "אורך הקטע",
+          "Comments": "מטרים"
+        }
+      }
+    }
+  },
+  "keys": [
+    "quality_by_link.csv.link_id -> hourly_agg.csv.gz.link_id",
+    "quality_by_link.csv.link_id -> avg_daily_profile.csv.gz.link_id",
+    "special_days.csv.date -> hourly_agg.csv.gz.date",
+    "maps/basemap/v_260112_basemap.zip.Name -> hourly_agg.csv.gz.link_id",
+    "maps/basemap/v_260112_basemap.zip.Name -> avg_daily_profile.csv.gz.link_id",
+    "maps/basemap/v_260112_basemap.zip.Name -> quality_by_link.csv.link_id",
+    "maps/basemap/v_260112_basemap.zip.Name -> maps/basemap/v_260112_a_b.xlsx.שם מקטע"
+  ],
+  "recursive": true
+}

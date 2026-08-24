@@ -1,0 +1,623 @@
+{
+  "spec": {
+    "name": "נוהל הכנה, תיעוד והפצה של קבצי מידע תחבורתי",
+    "version": "1.3",
+    "date": "15/05/2024",
+    "metadata_version": "1.1",
+    "source_page": "https://www.gov.il/he/pages/data_distribution",
+    "source_pdf": "https://www.gov.il/BlobFolder/policy/data_distribution/he/MoT%20data%20distribution%20guidelines%20v.1.3.pdf"
+  },
+  "date_format": "dd/mm/yyyy",
+  "field_types": [
+    "Text",
+    "Text(key)",
+    "Integer",
+    "Integer(key)",
+    "Number",
+    "String",
+    "Real",
+    "Date",
+    "Time",
+    "DateTime"
+  ],
+  "crs_values": [
+    "ITM",
+    "EPSG:2039",
+    "GRS_1980",
+    "WGS_1984"
+  ],
+  "geographic_types": [
+    "Point",
+    "Polyline",
+    "Polygon"
+  ],
+  "frequency_values": [
+    "שנתי",
+    "רבעוני",
+    "חודשי",
+    "שבועי",
+    "יומי",
+    "המאגר אינו מתעדכן",
+    "המאגר מתעדכן בתדירות לא קבועה"
+  ],
+  "header": [
+    {
+      "key": "Publisher",
+      "he": "מפרסם",
+      "kind": "value",
+      "status": "required",
+      "desc": "הגורם שפרסם את הנתונים"
+    },
+    {
+      "key": "Contact",
+      "he": "איש קשר",
+      "kind": "value",
+      "status": "required",
+      "desc": "שם איש קשר בגורם המחבר או המפרסם"
+    },
+    {
+      "key": "Contact Email",
+      "he": "דואר אלקטרוני",
+      "kind": "value",
+      "status": "optional",
+      "format": "email",
+      "desc": "כתובת מייל של איש הקשר"
+    },
+    {
+      "key": "Author",
+      "he": "מחבר",
+      "kind": "value",
+      "status": "required*",
+      "condition": "when author differs from publisher",
+      "desc": "גורם אחראי ליצירת סט הנתונים (משרד / רשות / יחידת סמך)"
+    },
+    {
+      "key": "Author Email",
+      "he": "דואר אלקטרוני מחבר",
+      "kind": "value",
+      "status": "optional",
+      "format": "email"
+    },
+    {
+      "key": "Title",
+      "he": "שם סט הנתונים",
+      "kind": "value",
+      "status": "required",
+      "desc": "שם משמעותי המתאר את סט הנתונים"
+    },
+    {
+      "key": "Description",
+      "he": "תיאור כללי",
+      "kind": "block",
+      "status": "required",
+      "desc": "תקציר של תוכן המידע, מטרתו ושלמותו"
+    },
+    {
+      "key": "Keywords",
+      "he": "תגיות",
+      "kind": "array",
+      "status": "required",
+      "desc": "מילות מפתח מופרדות בפסיק (ראה נספח א')"
+    },
+    {
+      "key": "Created",
+      "he": "תאריך יצירה",
+      "kind": "value",
+      "status": "required",
+      "format": "date"
+    },
+    {
+      "key": "Frequency of update",
+      "he": "תדירות עדכון",
+      "kind": "value",
+      "status": "optional",
+      "allowed": "frequency_values",
+      "default": "המאגר אינו מתעדכן"
+    },
+    {
+      "key": "Version",
+      "he": "גרסה",
+      "kind": "value",
+      "status": "required*",
+      "condition": "mandatory for any versioned dataset",
+      "desc": "מספר גרסה; אם מחליפה גרסאות קודמות יש לציין ב-Comments"
+    },
+    {
+      "key": "Last updated",
+      "he": "עדכון אחרון",
+      "kind": "value",
+      "status": "required",
+      "format": "date"
+    },
+    {
+      "key": "Temporal coverage",
+      "he": "טווח זמן",
+      "kind": "value",
+      "status": "required",
+      "desc": "טווח הזמן אליו מתייחסים הנתונים, טקסט חופשי"
+    },
+    {
+      "key": "Spatial coverage",
+      "he": "כיסוי מרחבי",
+      "kind": "value",
+      "status": "required",
+      "desc": "תיאור מילולי של הכיסוי המרחבי (ארצי / שם מטרופולין / שם יישוב)"
+    },
+    {
+      "key": "Language",
+      "he": "שפה",
+      "kind": "value",
+      "status": "optional"
+    },
+    {
+      "key": "Related documents",
+      "he": "מסמכים נלווים",
+      "kind": "block",
+      "status": "optional",
+      "desc": "רשימת קבצי מסמכים נלווים (pdf / טקסט)"
+    },
+    {
+      "key": "References",
+      "he": "הפניות",
+      "kind": "block",
+      "status": "optional",
+      "desc": "רשימת כתובות URL"
+    },
+    {
+      "key": "Legal constrains",
+      "he": "מגבלות שימוש",
+      "kind": "block",
+      "status": "optional"
+    },
+    {
+      "key": "License",
+      "he": "רישיון שימוש",
+      "kind": "value",
+      "status": "optional"
+    },
+    {
+      "key": "Data quality",
+      "he": "איכות המידע",
+      "kind": "value",
+      "status": "optional"
+    },
+    {
+      "key": "Dataset file",
+      "he": "קובץ סט הנתונים",
+      "kind": "value",
+      "status": "required",
+      "format": "zipname",
+      "desc": "שם קובץ ארכיון ZIP הכולל את סט הנתונים"
+    },
+    {
+      "key": "Files list",
+      "he": "רשימת קבצים",
+      "kind": "block",
+      "status": "required*",
+      "condition": "complex dataset (more than one file)",
+      "desc": "שורה אחת לכל קובץ; קובץ בפורמט מורכב (shp) מתואר בשורה אחת"
+    },
+    {
+      "key": "Size",
+      "he": "גודל",
+      "kind": "value",
+      "status": "optional",
+      "desc": "גודל משוער ב-MB"
+    },
+    {
+      "key": "Metadata creator",
+      "he": "מחבר המטא-דאטה",
+      "kind": "value",
+      "status": "optional"
+    },
+    {
+      "key": "Metadata creation date",
+      "he": "תאריך יצירת המטא-דאטה",
+      "kind": "value",
+      "status": "required",
+      "format": "date"
+    },
+    {
+      "key": "Metadata version",
+      "he": "גרסת מטא-דאטה",
+      "kind": "value",
+      "status": "optional",
+      "expected": "1.1"
+    },
+    {
+      "key": "Comments",
+      "he": "הערות",
+      "kind": "block",
+      "status": "optional"
+    },
+    {
+      "key": "URL",
+      "he": "כתובת מקוונת",
+      "kind": "value",
+      "status": "optional",
+      "format": "url"
+    },
+    {
+      "key": "Files",
+      "he": "קבצים",
+      "kind": "files",
+      "status": "required*",
+      "condition": "complex dataset"
+    },
+    {
+      "key": "Key list",
+      "he": "רשימת מפתחות",
+      "kind": "block",
+      "status": "required*",
+      "condition": "complex dataset with linked files",
+      "format": "keylink",
+      "desc": "file.field -> file.field"
+    }
+  ],
+  "survey": [
+    {
+      "key": "Statistical population",
+      "he": "אוכלוסייה סטטיסטית",
+      "kind": "block",
+      "status": "required"
+    },
+    {
+      "key": "Statistical unit",
+      "he": "יחידה סטטיסטית",
+      "kind": "value",
+      "status": "required"
+    },
+    {
+      "key": "Reference area",
+      "he": "אזור הסקר",
+      "kind": "value",
+      "status": "required"
+    },
+    {
+      "key": "Collection period",
+      "he": "תקופת הסקר",
+      "kind": "value",
+      "status": "required"
+    },
+    {
+      "key": "Sample frame",
+      "he": "מסגרת הדגימה",
+      "kind": "value",
+      "status": "required"
+    },
+    {
+      "key": "Sampling method",
+      "he": "שיטת הדגימה",
+      "kind": "value",
+      "status": "required"
+    },
+    {
+      "key": "Sample size",
+      "he": "גודל המדגם",
+      "kind": "value",
+      "status": "required"
+    },
+    {
+      "key": "Sample proportion",
+      "he": "אחוז המדגם",
+      "kind": "value",
+      "status": "optional"
+    },
+    {
+      "key": "Survey method",
+      "he": "שיטת הסקר",
+      "kind": "block",
+      "status": "required"
+    },
+    {
+      "key": "Estimation method",
+      "he": "שיטת האמידה",
+      "kind": "block",
+      "status": "required"
+    },
+    {
+      "key": "Estimation period",
+      "he": "תקופת האמידה",
+      "kind": "value",
+      "status": "required"
+    },
+    {
+      "key": "Data processing",
+      "he": "עיבוד הנתונים",
+      "kind": "block",
+      "status": "optional"
+    },
+    {
+      "key": "Overall accuracy",
+      "he": "מרווח הטעות",
+      "kind": "block",
+      "status": "optional"
+    },
+    {
+      "key": "Data validation",
+      "he": "תיקוף הנתונים",
+      "kind": "block",
+      "status": "optional"
+    },
+    {
+      "key": "Statistical definitions",
+      "he": "מושגים סטטיסטיים",
+      "kind": "value",
+      "status": "optional"
+    }
+  ],
+  "file": [
+    {
+      "key": "File name",
+      "he": "שם קובץ",
+      "kind": "value",
+      "status": "required"
+    },
+    {
+      "key": "File format",
+      "he": "פורמט קובץ",
+      "kind": "value",
+      "status": "required",
+      "desc": "פורמט (סיומת); בפורמט מורכב – סיומת הקובץ הראשי בלבד"
+    },
+    {
+      "key": "File description",
+      "he": "תיאור קובץ",
+      "kind": "value",
+      "status": "required",
+      "condition": "not needed for a single-file dataset"
+    },
+    {
+      "key": "File fields",
+      "he": "שדות",
+      "kind": "fields",
+      "status": "required"
+    },
+    {
+      "key": "File size",
+      "he": "גודל קובץ",
+      "kind": "value",
+      "status": "optional",
+      "desc": "MB; בפורמט מורכב – גודל כל הקבצים הקשורים"
+    },
+    {
+      "key": "File date",
+      "he": "תאריך יצירה",
+      "kind": "value",
+      "status": "optional",
+      "format": "date"
+    },
+    {
+      "key": "Spatial coverage",
+      "he": "כיסוי מרחבי",
+      "kind": "value",
+      "status": "optional",
+      "condition": "if different from the dataset-level description"
+    },
+    {
+      "key": "Spatial reference system",
+      "he": "היטל",
+      "kind": "value",
+      "status": "required*",
+      "condition": "GIS layers only",
+      "allowed": "crs_values"
+    },
+    {
+      "key": "Geographic bounding",
+      "he": "תיחום גאוגרפי",
+      "kind": "value",
+      "status": "required*",
+      "condition": "GIS layers only",
+      "desc": "ארבע קואורדינטות הפוליגון התוחם"
+    },
+    {
+      "key": "Geographic type",
+      "he": "סוג ישות גאוגרפית",
+      "kind": "value",
+      "status": "required*",
+      "condition": "GIS layers only",
+      "allowed": "geographic_types"
+    },
+    {
+      "key": "Data encoding",
+      "he": "קידוד הנתונים",
+      "kind": "value",
+      "status": "optional",
+      "desc": "UTF-8 / Windows-1255 (הרחבה מפורמט האון-בורד; מומלץ לכל קובץ טקסט)"
+    },
+    {
+      "key": "File comments",
+      "he": "הערות",
+      "kind": "value",
+      "status": "optional"
+    }
+  ],
+  "field": [
+    {
+      "key": "Name",
+      "he": "שם",
+      "kind": "value",
+      "status": "required",
+      "desc": "שם השדה כפי שמופיע בקובץ"
+    },
+    {
+      "key": "Type",
+      "he": "סוג",
+      "kind": "value",
+      "status": "required",
+      "allowed": "field_types",
+      "desc": "שדה מפתח: Text(key); לשדות Time/Date/DateTime רצוי לציין את פורמט הזמן ב-Comments"
+    },
+    {
+      "key": "Description",
+      "he": "תיאור",
+      "kind": "value",
+      "status": "required"
+    },
+    {
+      "key": "Comments",
+      "he": "הערות",
+      "kind": "value",
+      "status": "optional",
+      "desc": "יחידות מידה, פורמט זמן וכד'"
+    },
+    {
+      "key": "Values",
+      "he": "אופציונות",
+      "kind": "values",
+      "status": "required*",
+      "condition": "fields with discrete coded values",
+      "desc": "רשימת זוגות value / label / comment"
+    }
+  ],
+  "naming_rules": {
+    "file_names": [
+      "short but descriptive",
+      "Latin letters only",
+      "no spaces or special characters (* # % $ ...)",
+      "standard extensions (.csv .txt ...)"
+    ],
+    "field_names": [
+      "consistent across all files in the dataset",
+      "short, human readable, unique within a file",
+      "avoid generic names (VAR1)",
+      "Latin letters; English words preferred over transliteration",
+      "one compound-word style (CamelCase / camelCase / snake_case)",
+      "no spaces or special characters",
+      "identifier fields end with ID (objectID, catalogID)"
+    ],
+    "versioning": [
+      "consistent scheme",
+      "version at dataset level (zip name) preferred for complex datasets",
+      "dates or version numbers"
+    ]
+  },
+  "metadata_file_naming": "<dataset>-metadata.<json|xlsx|csv>  (e.g. priority2019-metadata.json)",
+  "exceptions": [
+    {
+      "data_type": "ספירות תנועה",
+      "rule": "פורמט אחוד לספירות תנועה",
+      "version_in_guideline": "2.01",
+      "version_online": "3.0",
+      "url": "https://www.gov.il/he/pages/uniform_format_traffic_counts"
+    }
+  ],
+  "keywords": {
+    "context": [
+      "existing data",
+      "planning data",
+      "project data",
+      "future data"
+    ],
+    "scope": [
+      "urban",
+      "inter-urban",
+      "national",
+      "district",
+      "local"
+    ],
+    "mode": [
+      "roads",
+      "traffic",
+      "public transport",
+      "bicycle",
+      "micro-mobility",
+      "pedestrians",
+      "aviation data",
+      "maritime data",
+      "commercial traffic",
+      "private vehicles",
+      "motorcycles",
+      "bus",
+      "train",
+      "rail",
+      "urban mass transit",
+      "taxi",
+      "commercial vehicles",
+      "trucks",
+      "vehicle classification",
+      "vehicle fleet"
+    ],
+    "performance": [
+      "fares",
+      "park and ride",
+      "travel times",
+      "speed",
+      "delays",
+      "waiting times",
+      "walking times",
+      "transfers",
+      "accessibility",
+      "density",
+      "occupancy",
+      "turnover",
+      "reliability",
+      "service interruptions"
+    ],
+    "safety": [
+      "accidents",
+      "injured data",
+      "traffic violations",
+      "traffic citations",
+      "events",
+      "weather data",
+      "work zone data"
+    ],
+    "measurement": [
+      "traffic counts",
+      "traffic volumes",
+      "trajectories",
+      "kilometrage",
+      "passenger counts",
+      "passenger volumes",
+      "boarding/alighting counts",
+      "origin-destination data",
+      "travel behavior",
+      "customer satisfaction",
+      "travel survey",
+      "on-board survey",
+      "household survey"
+    ],
+    "projects": [
+      "project inventory",
+      "five-year plans",
+      "investment plans",
+      "yearly budget",
+      "master plan",
+      "outline plan",
+      "building plan",
+      "land use"
+    ],
+    "infrastructure": [
+      "freeways",
+      "urban roads",
+      "rural roads",
+      "intersections",
+      "interchanges",
+      "railroads",
+      "terminals",
+      "priority lanes",
+      "bicycle lanes",
+      "sidewalks",
+      "parking",
+      "on-street parking",
+      "off-street parking"
+    ],
+    "control": [
+      "signs",
+      "traffic signals",
+      "traffic cameras",
+      "traffic detectors",
+      "signing authority",
+      "tolls"
+    ],
+    "pt": [
+      "route description",
+      "stations information",
+      "timetable",
+      "frequency",
+      "fare zones",
+      "boundaries"
+    ]
+  }
+}

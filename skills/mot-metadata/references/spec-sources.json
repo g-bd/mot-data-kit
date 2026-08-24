@@ -1,0 +1,22 @@
+{
+  "checked": "23/08/2026",
+  "sources": [
+    {"id": "guideline", "name": "נוהל הכנה ותיעוד קבצי מידע לתכנון תחבורה", "version": "1.3", "date": "15/05/2024",
+     "page": "https://www.gov.il/he/pages/data_distribution",
+     "pdf": "https://www.gov.il/BlobFolder/policy/data_distribution/he/MoT%20data%20distribution%20guidelines%20v.1.3.pdf",
+     "version_regex": "guidelines%20v\\.(\\d+\\.\\d+)\\.pdf", "bundled": "references/guidelines-v1.3.md"},
+    {"id": "onboard", "name": "פורמט אחוד לנתוני סקרי און-בורד", "version": "1.0", "date": "13/11/2024",
+     "page": "https://www.gov.il/he/pages/transportation-data-distribution",
+     "pdf": "https://www.gov.il/BlobFolder/policy/transportation-data-distribution/he/%D7%A4%D7%95%D7%A8%D7%9E%D7%98%20%D7%90%D7%97%D7%95%D7%93%20%D7%90%D7%95%D7%9F%20%D7%91%D7%95%D7%A8%D7%93%20%D7%92%D7%99%D7%A8%D7%A1%D7%90%201.0%20141124.pdf",
+     "version_regex": "%D7%92%D7%99%D7%A8%D7%A1%D7%90%20(\\d+\\.\\d+)", "bundled": "../mot-onboard/references/onboard-format-v1.0.md"},
+    {"id": "sensors", "name": "פורמט נתוני ספירות גלאים (סל הספירות הלאומי)", "version": "1.02", "date": "31/05/2026",
+     "page": "https://www.gov.il/he/pages/uniform_format_traffic_sensors", "pdf": null, "published": false,
+     "version_regex": "(\\d+\\.\\d+)", "bundled": "../mot-sensors/references/sensor-format-v1.02.md",
+     "note": "page not yet live (08/2026); bundled text comes from the v1.02 docx circulated by e-mail"},
+    {"id": "counts", "name": "פורמט אחוד ספירות תנועה", "version": "3.0", "date": null,
+     "page": "https://www.gov.il/he/pages/uniform_format_traffic_counts",
+     "pdf": "https://www.gov.il/BlobFolder/policy/uniform_format_traffic_counts/he/%D7%A4%D7%95%D7%A8%D7%9E%D7%98%20%D7%90%D7%97%D7%95%D7%93%20%D7%A1%D7%A4%D7%99%D7%A8%D7%95%D7%AA%20%D7%AA%D7%A0%D7%95%D7%A2%D7%94_%D7%92%D7%A8%D7%A1%D7%94_3.0.pdf",
+     "version_regex": "_%D7%92%D7%A8%D7%A1%D7%94_(\\d+\\.\\d+)", "bundled": null,
+     "note": "out of scope for this kit (the נוהל §6 exempts traffic counts); listed so the version check can warn"}
+  ]
+}

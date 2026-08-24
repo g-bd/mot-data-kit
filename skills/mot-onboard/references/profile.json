@@ -1,0 +1,1006 @@
+{
+  "profile": "onboard",
+  "spec": {
+    "name": "פורמט אחוד לנתוני סקרי און-בורד",
+    "version": "1.0",
+    "date": "13/11/2024",
+    "source_page": "https://www.gov.il/he/pages/transportation-data-distribution",
+    "source_pdf": "https://www.gov.il/BlobFolder/policy/transportation-data-distribution/he/%D7%A4%D7%95%D7%A8%D7%9E%D7%98%20%D7%90%D7%97%D7%95%D7%93%20%D7%90%D7%95%D7%9F%20%D7%91%D7%95%D7%A8%D7%93%20%D7%92%D7%99%D7%A8%D7%A1%D7%90%201.0%20141124.pdf"
+  },
+  "dataset_kind": "survey",
+  "survey_block": "onboard",
+  "field_name_style": "snake_case",
+  "metadata_file_pattern": "<survey>_<year>_metadata.xlsx",
+  "null_rule": "אין להשאיר תאים ריקים – שדה ללא נתון יקבל ערך Null",
+  "header_extra": [
+    {
+      "key": "Contractor",
+      "he": "חברה מבצעת",
+      "kind": "block",
+      "status": "required",
+      "after": "Last updated",
+      "desc": "רשימת חברות הביצוע, שורה לכל חברה"
+    },
+    {
+      "key": "Daily periods",
+      "he": "תקופות יום",
+      "kind": "block",
+      "status": "required",
+      "after": "Temporal coverage",
+      "format": "hh:mm-hh:mm",
+      "desc": "טווחי שעות לניפוח התוצאות (שיא/שפל), שורה לכל תקופה בסדר עולה"
+    },
+    {
+      "key": "Survey days",
+      "he": "ימי הסקר",
+      "kind": "value",
+      "status": "required",
+      "after": "Daily periods",
+      "desc": "רשימה מילולית של סוגי הימים שהסקר מייצג"
+    },
+    {
+      "key": "Vehicle types",
+      "he": "סוגי רכב",
+      "kind": "block",
+      "status": "required",
+      "after": "Language",
+      "desc": "רשימת סוגי כלי הרכב שנדגמו, שורה לכל סוג"
+    }
+  ],
+  "survey_override": [
+    {
+      "key": "Statistical population",
+      "kind": "block",
+      "status": "required"
+    },
+    {
+      "key": "Survey completeness",
+      "he": "שלמות הסקר",
+      "kind": "value",
+      "status": "required",
+      "after": "Statistical population",
+      "allowed_values": [
+        "מלא",
+        "חלקי"
+      ]
+    },
+    {
+      "key": "Statistical unit",
+      "status": "optional"
+    },
+    {
+      "key": "Reference area",
+      "kind": "value",
+      "status": "required"
+    },
+    {
+      "key": "Collection period",
+      "kind": "value",
+      "status": "required"
+    },
+    {
+      "key": "Sample frame",
+      "kind": "block",
+      "status": "required",
+      "desc": "חודשי ושנות הדגימה (month_year) – שורה לכל תקופת רישוי, תואם לשדה month_year בלוח הזמנים"
+    },
+    {
+      "key": "Sampling method",
+      "kind": "block",
+      "status": "required"
+    },
+    {
+      "key": "Sample size",
+      "status": "optional"
+    },
+    {
+      "key": "Sample size trips",
+      "he": "גודל המדגם – נסיעות",
+      "kind": "value",
+      "status": "optional",
+      "after": "Sampling method"
+    },
+    {
+      "key": "Sample size passengers",
+      "he": "גודל המדגם – נוסעים",
+      "kind": "value",
+      "status": "optional",
+      "after": "Sample size trips"
+    },
+    {
+      "key": "Sample proportion",
+      "status": "optional"
+    },
+    {
+      "key": "Sample proportion trips",
+      "he": "אחוז המדגם – נסיעות",
+      "kind": "value",
+      "status": "optional",
+      "after": "Sample size passengers"
+    },
+    {
+      "key": "Sample proportion passengers",
+      "he": "אחוז המדגם – נוסעים",
+      "kind": "value",
+      "status": "optional",
+      "after": "Sample proportion trips"
+    },
+    {
+      "key": "Survey method",
+      "kind": "block",
+      "status": "required"
+    },
+    {
+      "key": "Response rate",
+      "he": "שיעור היענות",
+      "kind": "value",
+      "status": "optional",
+      "after": "Survey method"
+    },
+    {
+      "key": "Estimation method",
+      "kind": "block",
+      "status": "optional"
+    },
+    {
+      "key": "Estimation period",
+      "status": "optional"
+    },
+    {
+      "key": "Data validation",
+      "kind": "block",
+      "status": "optional"
+    }
+  ],
+  "file_extra": [
+    {
+      "key": "Zones type",
+      "he": "סוג ישות קובץ האזורים",
+      "kind": "value",
+      "status": "required*",
+      "condition": "zones layer only",
+      "allowed_values": [
+        "אזורים סטטיסטיים",
+        "אזורי תנועה",
+        "אחר"
+      ]
+    }
+  ],
+  "expected_files": [
+    {
+      "name": "routes.csv",
+      "status": "required",
+      "he": "קווי הסקר",
+      "desc": "רשימת הקווים שנכללו בסקר (קו, כיוון, חלופה)",
+      "fields": [
+        {
+          "Name": "route_id",
+          "Type": "Text(key)",
+          "status": "required",
+          "Description": "קוד קו סקר (חד ערכי)",
+          "Comments": "מורכב ממק\"ט הקו, כיוון, חלופה מופרדים בקו תחתון"
+        },
+        {
+          "Name": "line_id",
+          "Type": "Integer",
+          "status": "required",
+          "Description": "מק\"ט הקו"
+        },
+        {
+          "Name": "line",
+          "Type": "Integer",
+          "status": "required",
+          "Description": "מספר הקו"
+        },
+        {
+          "Name": "direction",
+          "Type": "Integer",
+          "status": "required",
+          "Description": "כיוון"
+        },
+        {
+          "Name": "alternative",
+          "Type": "Text",
+          "status": "required",
+          "Description": "חלופה"
+        },
+        {
+          "Name": "operator",
+          "Type": "Text",
+          "status": "required",
+          "Description": "מפעיל"
+        },
+        {
+          "Name": "cluster_id_survey",
+          "Type": "Integer",
+          "status": "required*",
+          "Description": "אשכול קווים (סקר)"
+        },
+        {
+          "Name": "orig_line",
+          "Type": "Text",
+          "status": "required",
+          "Description": "מוצא הקו (רישוי)"
+        },
+        {
+          "Name": "dest_line",
+          "Type": "Text",
+          "status": "required",
+          "Description": "יעד הקו (רישוי)"
+        },
+        {
+          "Name": "cluster_id_line",
+          "Type": "Integer",
+          "status": "optional",
+          "Description": "אשכול קווים (רישוי)"
+        },
+        {
+          "Name": "line_name",
+          "Type": "Text",
+          "status": "optional",
+          "Description": "שילוט קו (רישוי)"
+        },
+        {
+          "Name": "line_type",
+          "Type": "Text",
+          "status": "optional",
+          "Description": "סוג קו (רישוי): עירוני, בין-עירוני"
+        },
+        {
+          "Name": "line_service",
+          "Type": "Text",
+          "status": "optional",
+          "Description": "סוג שירות (רישוי): מקומי, מאסף"
+        },
+        {
+          "Name": "vehicle_type",
+          "Type": "Text",
+          "status": "optional",
+          "Description": "סוג אוטובוס (רישוי)"
+        },
+        {
+          "Name": "line_purpose",
+          "Type": "Text",
+          "status": "optional",
+          "Description": "ייחודיות הקו (רישוי): קו סדיר, חד פעמי"
+        },
+        {
+          "Name": "length",
+          "Type": "Real",
+          "status": "required",
+          "Description": "אורך קו",
+          "Comments": "ק\"מ"
+        }
+      ]
+    },
+    {
+      "name": "shapes.zip",
+      "status": "required",
+      "he": "תיאור גאוגרפי",
+      "desc": "תיאור גאוגרפי של קווי הסקר (GTFS או רישוי); בסקר ארוך – קובץ לכל תקופת רישוי shapes_<month>_<year>.zip",
+      "pattern": "^shapes(_[0-9_]+)?\\.zip$|^gtfs.*\\.zip$",
+      "gtfs_ok": true
+    },
+    {
+      "name": "timetable.csv",
+      "status": "required",
+      "he": "לוחות זמנים",
+      "desc": "לוחות הזמנים של קווי הסקר על-פי רישוי",
+      "fields": [
+        {
+          "Name": "route_id",
+          "Type": "Text(key)",
+          "status": "required",
+          "Description": "קוד קו סקר (חד ערכי)"
+        },
+        {
+          "Name": "trip_id",
+          "Type": "Text(key)",
+          "status": "required",
+          "Description": "קוד נסיעה (חד ערכי)",
+          "Comments": "route_id + יום/תקופה + שעת יציאה + month_year, מופרדים בקו תחתון (סעיף 3.7)"
+        },
+        {
+          "Name": "month_year",
+          "Type": "Text",
+          "status": "required",
+          "Description": "חודש ושנה (חודש הלו\"ז)",
+          "Comments": "mm_yyyy"
+        },
+        {
+          "Name": "day_type",
+          "Type": "Text",
+          "status": "required*",
+          "Description": "סוג יום",
+          "Values": [
+            {
+              "value": "1",
+              "label": "א'-ה'"
+            },
+            {
+              "value": "2",
+              "label": "ו'"
+            },
+            {
+              "value": "3",
+              "label": "ש'"
+            },
+            {
+              "value": "11",
+              "label": "א'"
+            },
+            {
+              "value": "12",
+              "label": "ב'"
+            },
+            {
+              "value": "13",
+              "label": "ג'"
+            },
+            {
+              "value": "14",
+              "label": "ד'"
+            },
+            {
+              "value": "15",
+              "label": "ה'"
+            }
+          ]
+        },
+        {
+          "Name": "day_period",
+          "Type": "Text",
+          "status": "required",
+          "Description": "תקופת יום",
+          "Comments": "hh:mm_hh:mm"
+        },
+        {
+          "Name": "departure_time",
+          "Type": "DateTime",
+          "status": "required",
+          "Description": "שעת יציאה",
+          "Comments": "hh:mm"
+        }
+      ]
+    },
+    {
+      "name": "plan.csv",
+      "status": "optional",
+      "he": "תכנית הדגימה",
+      "desc": "רשימת הנסיעות שתוכננו להידגם מתוך לוחות הזמנים (מבנה זהה ל-timetable.csv)",
+      "fields_like": "timetable.csv"
+    },
+    {
+      "name": "trips.csv",
+      "status": "required",
+      "he": "נסיעות שבוצעו",
+      "desc": "הנסיעות שבוצעו בפועל, כולל מקדם ניפוח ברמת הנסיעה",
+      "fields": [
+        {
+          "Name": "trip_index",
+          "Type": "Integer(key)",
+          "status": "required",
+          "Description": "קוד סידורי של הנסיעה (חד ערכי)"
+        },
+        {
+          "Name": "trip_id",
+          "Type": "Text(key)",
+          "status": "required",
+          "Description": "קוד נסיעה (חד ערכי) בקובץ תכנון הדגימה"
+        },
+        {
+          "Name": "route_id",
+          "Type": "Text",
+          "status": "required",
+          "Description": "קוד קו סקר"
+        },
+        {
+          "Name": "trip_date",
+          "Type": "Date",
+          "status": "required",
+          "Description": "תאריך הנסיעה",
+          "Comments": "dd/mm/yyyy"
+        },
+        {
+          "Name": "day_period",
+          "Type": "Text",
+          "status": "required",
+          "Description": "תקופת יום",
+          "Comments": "hh:mm_hh:mm"
+        },
+        {
+          "Name": "trip_start_time",
+          "Type": "DateTime",
+          "status": "required",
+          "Description": "שעת התחלת הנסיעה בפועל",
+          "Comments": "dd/mm/yyyy hh:mm:ss"
+        },
+        {
+          "Name": "trip_end_time",
+          "Type": "DateTime",
+          "status": "required",
+          "Description": "שעת סיום הנסיעה בפועל",
+          "Comments": "hh:mm:ss"
+        },
+        {
+          "Name": "trip_duration",
+          "Type": "Time",
+          "status": "required",
+          "Description": "סה\"כ זמן נסיעה",
+          "Comments": "hh:mm:ss, שדה מחושב"
+        },
+        {
+          "Name": "trip_vehicle_type",
+          "Type": "Text",
+          "status": "required",
+          "Description": "סוג אוטובוס של הנסיעה בפועל",
+          "Comments": "אחד מהערכים בפרמטר Vehicle types"
+        },
+        {
+          "Name": "number_of_doors",
+          "Type": "Integer",
+          "status": "optional",
+          "Description": "מספר דלתות באוטובוס"
+        },
+        {
+          "Name": "surveyors_planned",
+          "Type": "Integer",
+          "status": "optional",
+          "Description": "סוקרים דרושים"
+        },
+        {
+          "Name": "surveyors_in_practice",
+          "Type": "Integer",
+          "status": "optional",
+          "Description": "סוקרים בפועל"
+        },
+        {
+          "Name": "forms_distributed",
+          "Type": "Integer",
+          "status": "optional",
+          "Description": "מספר טפסים שחולקו"
+        },
+        {
+          "Name": "trip_weight_factor",
+          "Type": "Real",
+          "status": "required",
+          "Description": "מקדם ניפוח לו\"ז"
+        },
+        {
+          "Name": "total_boardings",
+          "Type": "Integer",
+          "status": "required",
+          "Description": "מספר עולים מנופח",
+          "Comments": "שדה מחושב מקובץ obad.csv"
+        },
+        {
+          "Name": "total_boardings_factored",
+          "Type": "Real",
+          "status": "required",
+          "Description": "מקדם ניפוח עולים",
+          "Comments": "שדה מחושב"
+        },
+        {
+          "Name": "max_pass_factored",
+          "Type": "Real",
+          "status": "optional",
+          "Description": "מספר ממשיכים מקסימלי מנופח"
+        },
+        {
+          "Name": "average_pass_factored",
+          "Type": "Real",
+          "status": "optional",
+          "Description": "מספר נוסעים ממוצע מנופח"
+        },
+        {
+          "Name": "num_stops",
+          "Type": "Integer",
+          "status": "required",
+          "Description": "מספר תחנות בנסיעה"
+        }
+      ]
+    },
+    {
+      "name": "obad.csv",
+      "status": "required*",
+      "he": "נתוני עולים יורדים",
+      "desc": "ספירות עולים ויורדים ברמת התחנה, גולמי ומנופח",
+      "fields": [
+        {
+          "Name": "trip_index",
+          "Type": "Integer(key)",
+          "status": "required",
+          "Description": "קוד סידורי (חד ערכי)"
+        },
+        {
+          "Name": "station_index",
+          "Type": "Integer",
+          "status": "required",
+          "Description": "מספר סידורי של תחנה",
+          "Comments": "בסדר עולה מ-1 עד N"
+        },
+        {
+          "Name": "station_id",
+          "Type": "Integer",
+          "status": "required",
+          "Description": "מק\"ט תחנה תואם משרד התחבורה"
+        },
+        {
+          "Name": "station_name",
+          "Type": "Text",
+          "status": "required",
+          "Description": "שם התחנה"
+        },
+        {
+          "Name": "day_period",
+          "Type": "Text",
+          "status": "required",
+          "Description": "תקופת יום",
+          "Comments": "hh:mm_hh:mm"
+        },
+        {
+          "Name": "stop_time",
+          "Type": "Time",
+          "status": "required",
+          "Description": "שעת עצירה בתחנה",
+          "Comments": "hh:mm:ss"
+        },
+        {
+          "Name": "door_closing_time",
+          "Type": "Time",
+          "status": "required*",
+          "Description": "שעת סגירת הדלת",
+          "Comments": "hh:mm:ss"
+        },
+        {
+          "Name": "boardings",
+          "Type": "Integer",
+          "status": "required",
+          "Description": "עולים (לא מנופח)"
+        },
+        {
+          "Name": "alightings",
+          "Type": "Integer",
+          "status": "required",
+          "Description": "יורדים (לא מנופח)"
+        },
+        {
+          "Name": "through_pass",
+          "Type": "Integer",
+          "status": "required",
+          "Description": "ממשיכים (לא מנופח)"
+        },
+        {
+          "Name": "trip_weight_factor",
+          "Type": "Real",
+          "status": "required",
+          "Description": "מקדם ניפוח לו\"ז"
+        },
+        {
+          "Name": "boardings_factored",
+          "Type": "Integer",
+          "status": "required",
+          "Description": "עולים מנופח"
+        },
+        {
+          "Name": "alightings_factored",
+          "Type": "Integer",
+          "status": "required",
+          "Description": "יורדים מנופח"
+        },
+        {
+          "Name": "through_pass_factored",
+          "Type": "Integer",
+          "status": "required",
+          "Description": "ממשיכים מנופח"
+        }
+      ]
+    },
+    {
+      "name": "obod.csv",
+      "status": "required*",
+      "he": "נתוני השאלונים",
+      "desc": "תוצאות סקר השאלונים (מוצא-יעד ומאפייני הנוסע); שדות מזהים (שמות, כתובות, קואורדינטות) אינם בקובץ ההפצה",
+      "fields": [
+        {
+          "Name": "trip_index",
+          "Type": "Integer(key)",
+          "status": "required",
+          "Description": "קוד סידורי (חד ערכי)"
+        },
+        {
+          "Name": "quest_id",
+          "Type": "Integer",
+          "status": "required",
+          "Description": "קוד נסקר"
+        },
+        {
+          "Name": "quest_strt_Time",
+          "Type": "Time",
+          "status": "required",
+          "Description": "שעת ביצוע הסקר",
+          "Comments": "hh:mm:ss"
+        },
+        {
+          "Name": "orig_activity",
+          "Type": "Text",
+          "status": "required",
+          "Description": "פעילות – מוצא",
+          "Comments": "בהתאמה לסקר"
+        },
+        {
+          "Name": "orig_address",
+          "Type": "Text",
+          "status": "required*",
+          "Description": "כתובת – מוצא",
+          "distribution": false
+        },
+        {
+          "Name": "orig_city",
+          "Type": "Text",
+          "status": "optional",
+          "Description": "שם יישוב – מוצא"
+        },
+        {
+          "Name": "orig_lat_lon",
+          "Type": "Text",
+          "status": "required",
+          "Description": "קואורדינטות – מוצא",
+          "Comments": "WGS84, מופרדות בפסיק",
+          "distribution": false
+        },
+        {
+          "Name": "zone_id_orig",
+          "Type": "Integer(key)",
+          "status": "required",
+          "Description": "קוד אזור – מוצא",
+          "Comments": "מקושר ל-zones.zip",
+          "Values": [
+            {
+              "value": "-1",
+              "label": "חוץ לארץ"
+            },
+            {
+              "value": "-2",
+              "label": "יישובים פלסטיניים"
+            },
+            {
+              "value": "-3",
+              "label": "מחנות צה\"ל ושב\"ס"
+            },
+            {
+              "value": "-4",
+              "label": "לא ידוע"
+            }
+          ]
+        },
+        {
+          "Name": "first_station_id",
+          "Type": "Integer",
+          "status": "required",
+          "Description": "מק\"ט תחנת עלייה"
+        },
+        {
+          "Name": "first_bus_stop",
+          "Type": "Text",
+          "status": "optional",
+          "Description": "תיאור תחנת עלייה"
+        },
+        {
+          "Name": "first_access_mode",
+          "Type": "Text",
+          "status": "required*",
+          "Description": "אמצעי הגעה לתחנה"
+        },
+        {
+          "Name": "first_access_line",
+          "Type": "Text",
+          "status": "required*",
+          "Description": "מספר קו אמצעי הגעה לתחנה"
+        },
+        {
+          "Name": "first_access_other",
+          "Type": "Text",
+          "status": "optional",
+          "Description": "אמצעי הגעה לתחנה אחר"
+        },
+        {
+          "Name": "dest_activity",
+          "Type": "Text",
+          "status": "required",
+          "Description": "פעילות – יעד"
+        },
+        {
+          "Name": "dest_address",
+          "Type": "Text",
+          "status": "required*",
+          "Description": "כתובת – יעד",
+          "distribution": false
+        },
+        {
+          "Name": "dest_city",
+          "Type": "Text",
+          "status": "optional",
+          "Description": "שם יישוב – יעד"
+        },
+        {
+          "Name": "dest_lat_lon",
+          "Type": "Text",
+          "status": "required",
+          "Description": "קואורדינטות – יעד",
+          "Comments": "WGS84",
+          "distribution": false
+        },
+        {
+          "Name": "zone_id_dest",
+          "Type": "Integer(key)",
+          "status": "required",
+          "Description": "קוד אזור – יעד",
+          "Comments": "מקושר ל-zones.zip",
+          "Values": [
+            {
+              "value": "-1",
+              "label": "חוץ לארץ"
+            },
+            {
+              "value": "-2",
+              "label": "יישובים פלסטיניים"
+            },
+            {
+              "value": "-3",
+              "label": "מחנות צה\"ל ושב\"ס"
+            },
+            {
+              "value": "-4",
+              "label": "לא ידוע"
+            }
+          ]
+        },
+        {
+          "Name": "last_station_id",
+          "Type": "Integer",
+          "status": "required",
+          "Description": "מק\"ט תחנת ירידה"
+        },
+        {
+          "Name": "last_bus_stop",
+          "Type": "Text",
+          "status": "optional",
+          "Description": "תיאור תחנת ירידה"
+        },
+        {
+          "Name": "last_egress_mode",
+          "Type": "Text",
+          "status": "required*",
+          "Description": "אמצעי המשך מתחנת הירידה"
+        },
+        {
+          "Name": "last_egress_line",
+          "Type": "Text",
+          "status": "required*",
+          "Description": "מספר קו המשך מתחנת הירידה"
+        },
+        {
+          "Name": "last_egress_other",
+          "Type": "Text",
+          "status": "optional",
+          "Description": "אמצעי המשך אחר"
+        },
+        {
+          "Name": "pt_boardings",
+          "Type": "Text",
+          "status": "required*",
+          "Description": "מספר עליות בתח\"צ בין מוצא ליעד"
+        },
+        {
+          "Name": "trip_frequency",
+          "Type": "Text",
+          "status": "required*",
+          "Description": "תדירות נסיעה יומי/שבועי"
+        },
+        {
+          "Name": "payment_type",
+          "Type": "Text",
+          "status": "required*",
+          "Description": "אמצעי תשלום"
+        },
+        {
+          "Name": "gender",
+          "Type": "Text",
+          "status": "required*",
+          "Description": "מין"
+        },
+        {
+          "Name": "employment_status",
+          "Type": "Text",
+          "status": "required*",
+          "Description": "תעסוקה"
+        },
+        {
+          "Name": "age",
+          "Type": "Text",
+          "status": "required*",
+          "Description": "טווח גילאים"
+        },
+        {
+          "Name": "driver_license",
+          "Type": "Text",
+          "status": "required*",
+          "Description": "רישיון נהיגה"
+        },
+        {
+          "Name": "vehicles_household",
+          "Type": "Text",
+          "status": "required*",
+          "Description": "מספר רכבים למשק בית"
+        },
+        {
+          "Name": "accompanying_pass",
+          "Type": "Integer",
+          "status": "required*",
+          "Description": "מספר מתלווים בנסיעה"
+        },
+        {
+          "Name": "quest_weight_factor",
+          "Type": "Real",
+          "status": "required",
+          "Description": "מקדם ניפוח לשאלונים"
+        }
+      ]
+    },
+    {
+      "name": "zones.zip",
+      "status": "required",
+      "he": "אזורים",
+      "desc": "שכבה פוליגונלית של אזורי הסקר (אזורים סטטיסטיים / אזורי תנועה) לקידוד מוצאים ויעדים",
+      "pattern": "^zones.*\\.zip$|^statistical_areas.*\\.shp$|^zones.*\\.shp$",
+      "gis": true,
+      "fields_example_stat_2022": [
+        {
+          "Name": "semel_yishuv",
+          "Type": "Integer",
+          "status": "required",
+          "Description": "סמל יישוב"
+        },
+        {
+          "Name": "shem_yishuv",
+          "Type": "Text",
+          "status": "required",
+          "Description": "שם יישוב בעברית"
+        },
+        {
+          "Name": "shem_yishuv_english",
+          "Type": "Text",
+          "status": "required",
+          "Description": "שם יישוב באנגלית"
+        },
+        {
+          "Name": "stat_2022",
+          "Type": "Integer",
+          "status": "required",
+          "Description": "מספר אזור סטטיסטי ביישוב"
+        },
+        {
+          "Name": "zone_id",
+          "Type": "Integer(key)",
+          "status": "required",
+          "Description": "מספר אזור סטטיסטי ייחודי ארצי (yishuv_stat_2022 – יש לשנות את שם השדה ל-zone_id)"
+        },
+        {
+          "Name": "rova",
+          "Type": "Integer",
+          "status": "required",
+          "Description": "מספר רובע"
+        },
+        {
+          "Name": "tat_rova",
+          "Type": "Integer",
+          "status": "required*",
+          "Description": "מספר תת-רובע"
+        },
+        {
+          "Name": "cod_tifkud",
+          "Type": "Integer",
+          "status": "required",
+          "Description": "קוד תפקודי עיקרי של האזור הסטטיסטי"
+        },
+        {
+          "Name": "shape_length",
+          "Type": "Real",
+          "status": "required",
+          "Description": "היקף במטרים"
+        },
+        {
+          "Name": "shape_area",
+          "Type": "Integer",
+          "status": "required",
+          "Description": "שטח במטרים מרובעים"
+        }
+      ]
+    },
+    {
+      "name": "<survey>_<year>.pdf",
+      "status": "required*",
+      "he": "דו\"ח הסקר",
+      "desc": "דוח ממצאי הסקר כולל חישוב מקדמי הניפוח, שיטת הסקר ודוגמת השאלון",
+      "pattern": "\\.pdf$",
+      "related_doc": true
+    },
+    {
+      "name": "<survey>_<year>_metadata.xlsx",
+      "status": "required",
+      "he": "מטא-דאטה",
+      "desc": "קובץ המטא-דאטה",
+      "pattern": "metadata.*\\.(xlsx|json|csv)$",
+      "metadata": true
+    }
+  ],
+  "expected_keys": [
+    "routes.csv.route_id -> timetable.csv.route_id",
+    "timetable.csv.route_id -> trips.csv.route_id",
+    "timetable.csv.trip_id -> trips.csv.trip_id",
+    "trips.csv.trip_id -> obad.csv.trip_id",
+    "trips.csv.trip_id -> obod.csv.trip_id",
+    "obod.csv.zone_id_orig -> zones.zip.zone_id",
+    "obod.csv.zone_id_dest -> zones.zip.zone_id"
+  ],
+  "default_keywords": [
+    "on-board survey",
+    "passenger counts",
+    "origin-destination data",
+    "public transport",
+    "bus",
+    "boarding/alighting counts",
+    "travel behavior",
+    "סקר און-בורד",
+    "סקר נוסעים",
+    "אוטובוסים"
+  ],
+  "intake_questions": [
+    {
+      "key": "Contractor",
+      "q": "אילו חברות ביצעו את הסקר? (שורה לכל חברה)"
+    },
+    {
+      "key": "Daily periods",
+      "q": "מהן תקופות היום לניפוח (למשל 06:00-09:00, 09:00-15:00)?"
+    },
+    {
+      "key": "Survey days",
+      "q": "אילו סוגי ימים הסקר מייצג (ימי חול א'-ה' / שישי / שבת)?"
+    },
+    {
+      "key": "Vehicle types",
+      "q": "אילו סוגי כלי רכב נדגמו (רגיל / מפרקי / מיניבוס)?"
+    },
+    {
+      "key": "Survey completeness",
+      "q": "האם הסקר מלא (כל הקבצים לפי איור 1) או חלקי (ספירות עולים-יורדים בלבד)?"
+    },
+    {
+      "key": "Statistical population",
+      "q": "מהי אוכלוסיית הנוסעים הנסקרת?"
+    },
+    {
+      "key": "Reference area",
+      "q": "מהו אזור הסקר?"
+    },
+    {
+      "key": "Collection period",
+      "q": "באיזו תקופה נאספו הנתונים?"
+    },
+    {
+      "key": "Sample frame",
+      "q": "מהן תקופות הרישוי/הדגימה (month_year, שורה לכל תקופה)?"
+    },
+    {
+      "key": "Sampling method",
+      "q": "כיצד נבחר מדגם הנסיעות?"
+    },
+    {
+      "key": "Survey method",
+      "q": "באיזו שיטה נאספו הנתונים (ראיונות פנים אל פנים, טפסים, אפליקציה)?"
+    }
+  ],
+  "metadata_basename": "{name}_metadata"
+}
