@@ -1,0 +1,2 @@
+# Apache does not strip a CR: a CRLF ends up inside directive values and is a config error on the host.
+site/htaccess.template text eol=lf
