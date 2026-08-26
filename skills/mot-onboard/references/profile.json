@@ -12,6 +12,19 @@
   "field_name_style": "snake_case",
   "metadata_file_pattern": "<survey>_<year>_metadata.xlsx",
   "null_rule": "אין להשאיר תאים ריקים – שדה ללא נתון יקבל ערך Null",
+  "accepted_tokens": {
+    "note": "אסימונים המותרים כערך בשדה קטגוריאלי, נוסף על הקטגוריות של הסקר עצמו. אינם 'ערך חסר' ואינם שגיאת קידוד – הם קטגוריה בפני עצמה, ולכן אין לדווח עליהם כערך לא מתועד.",
+    "values": [
+      {
+        "value": "Null",
+        "label": "אין נתון בשדה (כלל ה-Null של סעיף 3.5)"
+      },
+      {
+        "value": "not_recorded",
+        "label": "השאלה לא נשאלה או התשובה לא נרשמה – להבדיל מ'לא ידוע', שהוא תשובה (FP-11)"
+      }
+    ]
+  },
   "header_extra": [
     {
       "key": "Contractor",
@@ -90,7 +103,10 @@
       "key": "Sample frame",
       "kind": "block",
       "status": "required",
-      "desc": "חודשי ושנות הדגימה (month_year) – שורה לכל תקופת רישוי, תואם לשדה month_year בלוח הזמנים"
+      "desc": "חודשי ושנות הדגימה (month_year) – שורה לכל תקופת רישוי, תואם לשדה month_year בלוח הזמנים. שם עונה ('קיץ 1', 'חורף 2') אינו תקופת רישוי.",
+      "row_format": "^\\d{1,2}([_/]\\d{1,2})*[_/]\\d{4}$",
+      "row_format_he": "m_yyyy / mm_yyyy / m_m_yyyy",
+      "row_format_source": "timetable.csv.month_year"
     },
     {
       "key": "Sampling method",
@@ -171,6 +187,24 @@
         "אזורים סטטיסטיים",
         "אזורי תנועה",
         "אחר"
+      ],
+      "normalise": {
+        "אזורים סטטיסטים": "אזורים סטטיסטיים",
+        "אזור סטטיסטי": "אזורים סטטיסטיים",
+        "אזורי תנועה (TAZ)": "אזורי תנועה"
+      }
+    },
+    {
+      "key": "Data encoding",
+      "he": "קידוד הקובץ",
+      "kind": "value",
+      "status": "required*",
+      "condition": "text files (CSV) in the distribution package",
+      "desc": "קידוד התווים של קובץ ההפצה – UTF-8 / UTF-8 (BOM) / Windows-1255. טבלה 4 של הפורמט מבקשת זאת לכל קובץ טקסט, וחבילה שאינה אחידה בקידוד תדווח בנפרד.",
+      "allowed_values": [
+        "UTF-8",
+        "UTF-8 (BOM)",
+        "Windows-1255"
       ]
     }
   ],
@@ -314,13 +348,15 @@
           "Type": "Text",
           "status": "required",
           "Description": "חודש ושנה (חודש הלו\"ז)",
-          "Comments": "mm_yyyy"
+          "Comments": "m_yyyy / mm_yyyy, ולתקופת רישוי המשתרעת על כמה חודשים m_m_yyyy (למשל 1_2020, 01/2015, 2_4_2024) – כדוגמאות סעיף 3.7 עצמן",
+          "format": "^\\d{1,2}([_/]\\d{1,2})*[_/]\\d{4}$"
         },
         {
           "Name": "day_type",
           "Type": "Text",
           "status": "required*",
           "Description": "סוג יום",
+          "Comments": "קודי טבלה 7: 1/2/3 לטווחי הימים, ו-11..15 ליום בודד א'..ה'. ערך שאינו קוד – למשל טווח ימים שאין לו קוד בטבלה 7 – יש לתעד כערך נוסף ברשימת ה-Values של החבילה.",
           "Values": [
             {
               "value": "1",

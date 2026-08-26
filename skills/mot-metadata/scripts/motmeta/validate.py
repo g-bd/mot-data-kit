@@ -166,12 +166,25 @@ def check_block_roles(meta: dict, spec: Spec, fx: Findings) -> None:
 def check_survey(meta: dict, spec: Spec, fx: Findings) -> None:
     for it in spec.survey:
         key = it["key"]
-        if it["status"] != "required":
-            continue
-        if _empty(meta.get(key)):
+        if it["status"] == "required" and _empty(meta.get(key)):
             fx.add("error", "survey", key, "missing_survey", f"חסר פרמטר חובה לסקר סטטיסטי: {key} ({it.get('he','')})", it.get("desc", "טבלה 2 בנוהל – השלמה לכותרת עבור סקרים"))
-        elif _is_todo(meta.get(key)):
+            continue
+        if it["status"] == "required" and _is_todo(meta.get(key)):
             fx.add("error", "survey", key, "todo", f"{key} מסומן TODO")
+            continue
+        # a block whose rows the profile gives a syntax for (Sample frame = month_year rows).
+        # A season name is a real answer to a different question, so this is a warning that
+        # names where the right answer lives - never an error (KP-16).
+        rx = it.get("row_format")
+        if not rx or _empty(meta.get(key)) or _is_todo(meta.get(key)):
+            continue
+        bad = [to_text(r) for r in as_lines(meta.get(key)) if to_text(r) and not re.match(rx, to_text(r).strip())]
+        if bad:
+            src = it.get("row_format_source")
+            fx.add("warning", "survey", key, "row_format",
+                   f"{key}: {len(bad)} שורות אינן בתחביר {it.get('row_format_he', rx)} – " + ", ".join(bad[:5]),
+                   it.get("desc", ""),
+                   f"קח את הערכים מעמודת {src}" if src else "")
 
 
 # --------------------------------------------------------------------------- files vs folder
@@ -234,6 +247,17 @@ def check_files(meta: dict, spec: Spec, scan: Optional[dict], fx: Findings) -> N
         for d in as_lines(meta.get("Related documents")):
             if _norm_file(d) not in docs and not URL_RE.match(d) and not (Path(scan["folder"]) / d).exists():
                 fx.add("warning", "folder", d, "related_doc_missing", f"המסמך הנלווה '{d}' לא נמצא בתיקייה")
+        # KP-4: the encoding is read per FILE. Say so when a package is not uniform - a
+        # reader who opens the package with one encoding gets mojibake in the other half.
+        encs: dict[str, list[str]] = {}
+        for e in scan["files"]:
+            if e.get("role") == "data" and e.get("encoding") and e.get("kind") == "table":
+                encs.setdefault(e["encoding"], []).append(e["name"])
+        if len(encs) > 1:
+            fx.add("warning", "folder", scan["folder"], "encoding_not_uniform",
+                   f"החבילה מכילה {len(encs)} קידודי תווים שונים",
+                   "; ".join(f"{k}: {', '.join(v[:4])}" for k, v in sorted(encs.items())),
+                   "המר את כל קובצי הטקסט לקידוד אחד (UTF-8) וציין אותו ב-Data encoding לכל קובץ")
         if scan.get("documents"):
             rel = {_norm_file(d) for d in as_lines(meta.get("Related documents"))}
             for d in scan["documents"]:
@@ -261,6 +285,15 @@ def check_files(meta: dict, spec: Spec, scan: Optional[dict], fx: Findings) -> N
                 fx.add("error", "files", where, "missing_file_key", f"חסר {key} ({it.get('he','')})")
             if key == "File date" and not _empty(val) and not DATE_RE.match(to_text(val)):
                 fx.add("warning", "files", where, "date_format", f"File date '{to_text(val)}' אינו dd/mm/yyyy")
+            if it.get("normalise") and not _empty(val) and to_text(val).strip() in it["normalise"]:
+                # a spelling everybody uses, one character from the format's own (KP-15):
+                # say which value it is, do not make the user fix it thirteen times
+                want = it["normalise"][to_text(val).strip()]
+                fx.add("info", "files", where, "value_normalised",
+                       f"{key} = '{to_text(val).strip()}' נקרא כ-'{want}'", "", f"רצוי לכתוב '{want}' בדיוק")
+                val = want
+            if it.get("allowed_values") and not _empty(val) and to_text(val).strip() not in it["allowed_values"]:
+                fx.add("warning", "files", where, "not_allowed", f"{key} = '{to_text(val)}' אינו מהערכים המותרים", ", ".join(it["allowed_values"]))
             if it.get("allowed") and not _empty(val):
                 allowed = spec.allowed(it["allowed"])
                 tv = to_text(val)
@@ -452,8 +485,18 @@ def check_fields(fl: dict, e: Optional[dict], spec: Spec, fx: Findings, where: s
                 fx.add("info", "fields", f"{where}.{f.get('Name')}", "key_not_unique", f"'{f.get('Name')}' מוגדר מפתח אך אינו חד-ערכי בקובץ זה (מפתח זר?)")
         if e.get("duplicate_headers"):
             fx.add(desc_sev, "fields", where, "duplicate_headers_in_file", f"כותרות כפולות בקובץ: {', '.join(e['duplicate_headers'])}", "", "", desc_bucket)
-        if e.get("encoding") == "cp1255" and not _empty(fl.get("Data encoding")) is False:
-            fx.add("info", "files", where, "encoding_note", "הקובץ בקידוד Windows-1255 – רצוי לציין זאת (Data encoding / File comments) או להמיר ל-UTF-8")
+        # KP-4: Data encoding is a per-FILE key of the format's Table 4. Say what the file
+        # really is, and say it when the document says something else.
+        enc_he = {"utf-8-sig": "UTF-8 (BOM)", "utf-8": "UTF-8", "cp1255": "Windows-1255"}
+        real = enc_he.get(e.get("encoding"), e.get("encoding"))
+        if real and _empty(fl.get("Data encoding")):
+            sev = "warning" if e.get("encoding") == "cp1255" else "info"
+            fx.add(sev, "files", where, "encoding_note",
+                   f"לא צוין Data encoding; הקובץ נקרא כ-{real}",
+                   "טבלה 4: יש לציין את קידוד התווים לכל קובץ טקסט", f"כתוב Data encoding = {real}")
+        elif real and to_text(fl.get("Data encoding")).strip().upper() not in (str(real).upper(), str(e.get("encoding")).upper()):
+            fx.add("warning", "files", where, "encoding_mismatch",
+                   f"Data encoding = '{to_text(fl.get('Data encoding'))}' אך הקובץ נקרא כ-{real}")
 
 
 # --------------------------------------------------------------------------- deep (opt-in) checks
