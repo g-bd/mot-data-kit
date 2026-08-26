@@ -790,7 +790,9 @@ def read_column_values(folder: Path, rel: str, column: str, limit: int = 200000)
 def read_column_counts(folder: Path, rel: str, column: str, limit: int = 200000) -> Optional[Counter]:
     """How many rows carry each value of one column (top level, or a member of a zip).
 
-    None when unreadable. `limit` caps the ROWS read, not the distinct values.
+    None when unreadable. `limit` caps the DISTINCT values, exactly as it always did for
+    `read_column_values` - a join on a multi-million-row file must see the same key set it saw
+    before counting was added to this function.
     """
     rel = rel.replace("\\", "/")
     try:
@@ -825,8 +827,8 @@ def read_column_counts(folder: Path, rel: str, column: str, limit: int = 200000)
                 return None
             i = header.index(column)
             out: Counter = Counter()
-            for n, row in enumerate(it):
-                if n >= limit:
+            for row in it:
+                if len(out) >= limit:
                     break
                 v = row[i] if i < len(row) else None
                 if v is not None and str(v).strip() != "":
@@ -840,8 +842,8 @@ def read_column_counts(folder: Path, rel: str, column: str, limit: int = 200000)
                 return None
             i = names.index(column)
             out = Counter()
-            for n, rec in enumerate(r.iterRecords()):
-                if n >= limit:
+            for rec in r.iterRecords():
+                if len(out) >= limit:
                     break
                 v = rec[i]
                 if v is not None and str(v).strip() != "":
@@ -901,8 +903,8 @@ def _values_from_shp_bytes(zf: zipfile.ZipFile, shp_name: str, column: str, limi
             return None
         i = names.index(column)
         out: Counter = Counter()
-        for n, rec in enumerate(rd.iterRecords()):
-            if n >= limit:
+        for rec in rd.iterRecords():
+            if len(out) >= limit:
                 break
             v = rec[i]
             if v is not None and str(v).strip() != "":
@@ -926,8 +928,8 @@ def _values_from_csv_bytes(raw: bytes, column: str, limit: int) -> Optional[Coun
     if i is None:
         return None
     out: Counter = Counter()
-    for n, row in enumerate(rd):
-        if n >= limit:
+    for row in rd:
+        if len(out) >= limit:
             break
         if i < len(row):
             v = row[i].strip()
