@@ -25,6 +25,25 @@ SHP_SIDECARS = {".shx", ".dbf", ".prj", ".cpg", ".sbn", ".sbx", ".qpj", ".shp.xm
 METADATA_NAME_RE = re.compile(r"metadata", re.I)
 KIT_OUTPUTS = {"metadata-config.json", "metadata-report.html", "findings.json", "scan.json", "package-checklist.json", "fix-plan.json", "fix-log.json"}
 
+# A DBF declares the code page its text is written in with one byte of its header (the "language
+# driver id", offset 29). This is the dBASE table - part of the file format, not of our dictionary.
+# 0x57 is ESRI's "ANSI", meaning *the writing machine's* code page, which names no code page at
+# all; it is deliberately absent here so that such a file falls through to DBF_FALLBACK_CODEC.
+DBF_LDID_CODEPAGE = {
+    0x01: "cp437", 0x02: "cp850", 0x03: "cp1252", 0x04: "mac_roman", 0x08: "cp865", 0x09: "cp437",
+    0x0A: "cp850", 0x0B: "cp437", 0x0D: "cp437", 0x0E: "cp850", 0x0F: "cp437", 0x10: "cp850",
+    0x11: "cp437", 0x12: "cp850", 0x13: "cp932", 0x14: "cp850", 0x15: "cp437", 0x16: "cp850",
+    0x17: "cp865", 0x18: "cp437", 0x19: "cp437", 0x1A: "cp850", 0x1B: "cp437", 0x1C: "cp863",
+    0x1D: "cp850", 0x1F: "cp852", 0x22: "cp852", 0x23: "cp852", 0x24: "cp860", 0x25: "cp850",
+    0x26: "cp866", 0x37: "cp850", 0x40: "cp852", 0x4D: "cp936", 0x4E: "cp949", 0x4F: "cp950",
+    0x50: "cp874", 0x58: "cp1252", 0x59: "cp1252", 0x64: "cp852", 0x65: "cp866", 0x66: "cp865",
+    0x67: "cp861", 0x6A: "cp737", 0x6B: "cp857", 0x6C: "cp863", 0x78: "cp950", 0x79: "cp949",
+    0x7A: "cp936", 0x7B: "cp932", 0x7C: "cp874", 0x86: "cp737", 0x87: "cp852", 0x88: "cp857",
+    0xC8: "cp1250", 0xC9: "cp1251", 0xCA: "cp1254", 0xCB: "cp1253", 0xCC: "cp1257",
+}
+DBF_FALLBACK_CODEC = "cp1255"        # Windows Hebrew - what Israeli deliveries are written in
+DBF_LAST_RESORT_CODEC = "cp1252"
+
 _INT_RE = re.compile(r"^[+-]?\d+$")
 _REAL_RE = re.compile(r"^[+-]?(\d+\.\d*|\.\d+|\d+)([eE][+-]?\d+)?$")
 _DATE_RES = [
@@ -442,6 +461,91 @@ def _crs_from_prj(prj_text: str) -> dict:
     return out
 
 
+def _cpg_codec(text: Optional[str]) -> Optional[str]:
+    """Codec named by a .cpg sidecar ('UTF-8', '1255', 'cp1255', 'ISO-8859-8'...)."""
+    t = (text or "").strip().strip("\x00").lower()
+    if not t:
+        return None
+    if t.isdigit():
+        t = "cp" + t
+    t = t.replace(" ", "")
+    try:
+        import codecs
+        return codecs.lookup(t).name
+    except Exception:
+        return None
+
+
+def dbf_codec_candidates(dbf_head: bytes, cpg_text: Optional[str] = None) -> list[tuple[str, str]]:
+    """Encodings to try for a DBF's text, best first, as (codec, why).
+
+    The .cpg wins when there is one, then UTF-8 (what a modern writer produces and what pyshp
+    assumes), then the code page the DBF's own header names, then Windows Hebrew. A layer whose
+    attribute table cannot be decoded is a layer with NO documented fields - which is worse than
+    reading it under a named assumption and saying so (KP-30).
+    """
+    out: list[tuple[str, str]] = []
+    seen: set[str] = set()
+
+    def _add(codec: Optional[str], why: str) -> None:
+        if not codec:
+            return
+        key = codec.lower().replace("-", "_")
+        if key in seen:
+            return
+        seen.add(key)
+        out.append((codec, why))
+
+    _add(_cpg_codec(cpg_text), "cpg")
+    _add("utf-8", "utf-8")
+    ldid = dbf_head[29] if len(dbf_head) > 29 else 0
+    _add(DBF_LDID_CODEPAGE.get(ldid), f"ldid_0x{ldid:02x}")
+    _add(DBF_FALLBACK_CODEC, "fallback")
+    _add(DBF_LAST_RESORT_CODEC, "last_resort")
+    return out
+
+
+def _open_shapefile(shp_bytes: Optional[bytes] = None, shx_bytes: Optional[bytes] = None, dbf_bytes: Optional[bytes] = None,
+                    path: Optional[Path] = None, cpg_text: Optional[str] = None) -> tuple[Any, dict]:
+    """Open a shapefile, decoding its attribute table with the first encoding that works.
+
+    Returns (reader, note) where note records `dbf_encoding_used`, the DBF's own `dbf_ldid`, and
+    `dbf_encoding_assumed` when the encoding was neither declared in a .cpg nor plain UTF-8.
+    """
+    import shapefile
+    head = dbf_bytes[:32] if dbf_bytes else (path.with_suffix(".dbf").read_bytes()[:32] if path and path.with_suffix(".dbf").exists() else b"")
+    if path is not None and cpg_text is None:
+        cpg = path.with_suffix(".cpg")
+        cpg_text = cpg.read_text(errors="ignore") if cpg.exists() else None
+    cands = dbf_codec_candidates(head, cpg_text)
+    note: dict[str, Any] = {"dbf_ldid": head[29] if len(head) > 29 else None}
+    last: Optional[Exception] = None
+    for codec, why in cands:
+        try:
+            if path is not None:
+                reader = shapefile.Reader(str(path), encoding=codec, encodingErrors="strict")
+            else:
+                reader = shapefile.Reader(shp=io.BytesIO(shp_bytes) if shp_bytes else None,
+                                          shx=io.BytesIO(shx_bytes) if shx_bytes else None,
+                                          dbf=io.BytesIO(dbf_bytes) if dbf_bytes else None,
+                                          encoding=codec, encodingErrors="strict")
+            for i, _rec in enumerate(reader.iterRecords()):
+                if i >= 200:
+                    break
+            note["dbf_encoding_used"] = codec
+            if why not in ("cpg", "utf-8"):
+                note["dbf_encoding_assumed"] = codec
+                note["dbf_encoding_reason"] = why
+            return reader, note
+        except UnicodeDecodeError as e:
+            last = e
+            continue
+        except Exception as e:
+            # not an encoding problem - let the caller report it as it always has
+            raise e if last is None else e
+    raise last if last else RuntimeError("shapefile could not be opened")
+
+
 def scan_shapefile(shp_path: Path, zf: Optional[zipfile.ZipFile] = None, members: Optional[dict] = None) -> dict:
     """Scan a .shp (+ sidecars) either on disk or inside an open zip."""
     info: dict[str, Any] = {"kind": "gis", "format": "SHP", "fields": [], "sidecars": []}
@@ -456,20 +560,24 @@ def scan_shapefile(shp_path: Path, zf: Optional[zipfile.ZipFile] = None, members
             sidecars = [p for p in shp_path.parent.iterdir() if p.with_suffix("") == stem and p.suffix.lower() in SHP_SIDECARS]
             info["sidecars"] = [p.name for p in sidecars]
             info["size_mb_all"] = mb(shp_path.stat().st_size + sum(p.stat().st_size for p in sidecars))
-            reader = shapefile.Reader(str(shp_path))
+            cpg = shp_path.with_suffix(".cpg")
+            cpg_text = cpg.read_text(errors="ignore").strip() if cpg.exists() else None
+            info["dbf_encoding_file"] = cpg_text
+            reader, enc_note = _open_shapefile(path=shp_path, cpg_text=cpg_text)
+            info.update(enc_note)
             prj = shp_path.with_suffix(".prj")
             prj_text = prj.read_text(errors="ignore") if prj.exists() else None
-            cpg = shp_path.with_suffix(".cpg")
-            info["dbf_encoding_file"] = cpg.read_text(errors="ignore").strip() if cpg.exists() else None
         else:
             base = shp_path.with_suffix("").as_posix()
-            shp = io.BytesIO(zf.read(members[".shp"]))
-            shx = io.BytesIO(zf.read(members[".shx"])) if ".shx" in members else None
-            dbf = io.BytesIO(zf.read(members[".dbf"])) if ".dbf" in members else None
-            reader = shapefile.Reader(shp=shp, shx=shx, dbf=dbf)
+            cpg_text = zf.read(members[".cpg"]).decode("ascii", "ignore").strip() if ".cpg" in members else None
+            info["dbf_encoding_file"] = cpg_text
+            reader, enc_note = _open_shapefile(shp_bytes=zf.read(members[".shp"]),
+                                               shx_bytes=zf.read(members[".shx"]) if ".shx" in members else None,
+                                               dbf_bytes=zf.read(members[".dbf"]) if ".dbf" in members else None,
+                                               cpg_text=cpg_text)
+            info.update(enc_note)
             info["sidecars"] = [Path(m).name for m in members.values()]
             prj_text = zf.read(members[".prj"]).decode("utf-8", "ignore") if ".prj" in members else None
-            info["dbf_encoding_file"] = zf.read(members[".cpg"]).decode("ascii", "ignore").strip() if ".cpg" in members else None
         info["geometry_type"] = {1: "Point", 3: "Polyline", 5: "Polygon", 8: "Point", 11: "Point", 13: "Polyline", 15: "Polygon", 18: "Point", 21: "Point", 23: "Polyline", 25: "Polygon", 28: "Point", 31: "Polygon"}.get(reader.shapeType, str(reader.shapeTypeName))
         info["n_rows"] = len(reader)
         bbox = list(reader.bbox) if reader.bbox else None
@@ -674,7 +782,16 @@ def scan_folder(folder: str | Path, recursive: bool = True, deep_zip: bool = Tru
 
 
 def read_column_values(folder: Path, rel: str, column: str, limit: int = 200000) -> Optional[set]:
-    """Values of one column of one file (top level, or a member of a zip). None when unreadable."""
+    """Distinct values of one column of one file. None when unreadable."""
+    c = read_column_counts(folder, rel, column, limit)
+    return None if c is None else set(c)
+
+
+def read_column_counts(folder: Path, rel: str, column: str, limit: int = 200000) -> Optional[Counter]:
+    """How many rows carry each value of one column (top level, or a member of a zip).
+
+    None when unreadable. `limit` caps the ROWS read, not the distinct values.
+    """
     rel = rel.replace("\\", "/")
     try:
         if "/" in rel and not (folder / rel).exists():
@@ -707,29 +824,28 @@ def read_column_values(folder: Path, rel: str, column: str, limit: int = 200000)
                 wb.close()
                 return None
             i = header.index(column)
-            out = set()
-            for row in it:
-                if len(out) >= limit:
+            out: Counter = Counter()
+            for n, row in enumerate(it):
+                if n >= limit:
                     break
                 v = row[i] if i < len(row) else None
                 if v is not None and str(v).strip() != "":
-                    out.add(str(v).strip())
+                    out[str(v).strip()] += 1
             wb.close()
             return out
         if ext == ".shp":
-            import shapefile
-            r = shapefile.Reader(str(p))
+            r, _note = _open_shapefile(path=p)
             names = [f[0] for f in r.fields if f[0] != "DeletionFlag"]
             if column not in names:
                 return None
             i = names.index(column)
-            out = set()
-            for rec in r.iterRecords():
-                if len(out) >= limit:
+            out = Counter()
+            for n, rec in enumerate(r.iterRecords()):
+                if n >= limit:
                     break
                 v = rec[i]
                 if v is not None and str(v).strip() != "":
-                    out.add(str(v).strip())
+                    out[str(v).strip()] += 1
             return out
         if ext == ".zip":
             with zipfile.ZipFile(p) as zf:
@@ -766,36 +882,37 @@ def _zip_member_bytes(zip_bytes: bytes, member: str) -> Optional[bytes]:
     return None
 
 
-def _values_from_shp_bytes(zf: zipfile.ZipFile, shp_name: str, column: str, limit: int) -> Optional[set]:
+def _values_from_shp_bytes(zf: zipfile.ZipFile, shp_name: str, column: str, limit: int) -> Optional[Counter]:
     try:
-        import shapefile
+        import shapefile  # noqa: F401
     except ImportError:
         return None
     stem = shp_name[:-4].lower()
     lower = {n.lower(): n for n in zf.namelist()}
     try:
-        rd = shapefile.Reader(
-            shp=io.BytesIO(zf.read(lower[stem + ".shp"])),
-            shx=io.BytesIO(zf.read(lower[stem + ".shx"])) if stem + ".shx" in lower else None,
-            dbf=io.BytesIO(zf.read(lower[stem + ".dbf"])) if stem + ".dbf" in lower else None,
+        rd, _note = _open_shapefile(
+            shp_bytes=zf.read(lower[stem + ".shp"]),
+            shx_bytes=zf.read(lower[stem + ".shx"]) if stem + ".shx" in lower else None,
+            dbf_bytes=zf.read(lower[stem + ".dbf"]) if stem + ".dbf" in lower else None,
+            cpg_text=zf.read(lower[stem + ".cpg"]).decode("ascii", "ignore") if stem + ".cpg" in lower else None,
         )
         names = [f[0] for f in rd.fields if f[0] != "DeletionFlag"]
         if column not in names:
             return None
         i = names.index(column)
-        out = set()
-        for rec in rd.iterRecords():
-            if len(out) >= limit:
+        out: Counter = Counter()
+        for n, rec in enumerate(rd.iterRecords()):
+            if n >= limit:
                 break
             v = rec[i]
             if v is not None and str(v).strip() != "":
-                out.add(str(v).strip())
+                out[str(v).strip()] += 1
         return out
     except Exception:
         return None
 
 
-def _values_from_csv_bytes(raw: bytes, column: str, limit: int) -> Optional[set]:
+def _values_from_csv_bytes(raw: bytes, column: str, limit: int) -> Optional[Counter]:
     enc = detect_encoding(raw[:200000])
     text = raw.decode(enc, "replace")
     delim = _sniff_delimiter(text)
@@ -808,14 +925,14 @@ def _values_from_csv_bytes(raw: bytes, column: str, limit: int) -> Optional[set]
     i = norm.get(re.sub(r"[\u200b-\u200f\u202a-\u202e\ufeff]", "", column).strip().lower())
     if i is None:
         return None
-    out = set()
-    for row in rd:
-        if len(out) >= limit:
+    out: Counter = Counter()
+    for n, row in enumerate(rd):
+        if n >= limit:
             break
         if i < len(row):
             v = row[i].strip()
             if v and v.lower() not in NA_TOKENS:
-                out.add(v)
+                out[v] += 1
     return out
 
 

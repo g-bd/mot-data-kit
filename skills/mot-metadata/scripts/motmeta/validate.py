@@ -343,6 +343,16 @@ def check_files(meta: dict, spec: Spec, scan: Optional[dict], fx: Findings) -> N
                            f"התיבה האמיתית של השכבה: {real}" if real else "קרא את התיבה החוסמת מהשכבה עצמה")
             if e and e.get("dbf_hebrew_suspect"):
                 fx.add("warning", "files", where, "dbf_encoding", "ייתכן שקידוד העברית ב-.dbf אינו נקרא כראוי (חסר .cpg?)", "", "הוסף קובץ .cpg עם הקידוד (UTF-8 / 1255)")
+            # KP-30: the layer declared no encoding and is not UTF-8, so its attribute table was
+            # read under an assumption. Say which one - a layer read wrongly is a layer whose
+            # values are quietly wrong, and a layer not read at all has no fields to document.
+            if e and e.get("dbf_encoding_assumed"):
+                ldid = e.get("dbf_ldid")
+                fx.add("info", "files", where, "dbf_encoding_assumed",
+                       f"טבלת המאפיינים של השכבה נקראה בהנחת קידוד {e['dbf_encoding_assumed']}",
+                       (f"בקובץ ה-.dbf אין קידוד מוצהר (בית שפה 0x{ldid:02x})" if isinstance(ldid, int) else "בקובץ ה-.dbf אין קידוד מוצהר")
+                       + " ואין קובץ .cpg לצידו",
+                       f"הוסף קובץ .cpg עם הקידוד ({e['dbf_encoding_assumed']}) כדי שהקריאה לא תהיה בהנחה")
         # format Table 5: a DELIVERY container (GTFS / licensing zip) is carried through
         # unchanged, so its fields - and the fields of its members - are documented at the
         # level the format asks for: the name and the format. An unanswered Description
