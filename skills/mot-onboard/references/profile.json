@@ -856,6 +856,15 @@
       "desc": "שכבה פוליגונלית של אזורי הסקר (אזורים סטטיסטיים / אזורי תנועה) לקידוד מוצאים ויעדים",
       "pattern": "^zones.*\\.zip$|^statistical_areas.*\\.shp$|^zones.*\\.shp$",
       "gis": true,
+      "field_descriptions_file": "cbs-fields.json",
+      "zones_key_candidates": [
+        "zone_id",
+        "YISHUV_STA",
+        "YISHUV_STAT_2022",
+        "YISHUV_STAT11",
+        "STAT11",
+        "TAZ"
+      ],
       "fields_example_stat_2022": [
         {
           "Name": "semel_yishuv",

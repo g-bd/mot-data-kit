@@ -136,12 +136,15 @@ def _expected_fields(ef: Optional[dict], spec: Spec) -> dict[str, dict]:
     return {f["Name"].lower(): f for f in flds}
 
 
-def _field_entry(col: dict, cfg_field: dict, exp: Optional[dict], hint: Optional[dict] = None) -> dict:
+def _field_entry(col: dict, cfg_field: dict, exp: Optional[dict], hint: Optional[dict] = None,
+                 shipped: Optional[dict] = None) -> dict:
     name = col["name"]
     ftype = cfg_field.get("Type") or (exp or {}).get("Type") or col.get("inferred_type") or "Text"
     if col.get("unique_in_sample") and not exp and not cfg_field.get("Type") and re.search(r"(^|_)(id|index|key)$|ID$", name, re.I):
         ftype = f"{ftype}(key)" if "(key)" not in ftype and ftype in ("Integer", "Text") else ftype
-    desc = cfg_field.get("Description") or (exp or {}).get("Description")
+    # the answer the user gave wins, then the format's own dictionary, then the description the
+    # layer's PUBLISHER ships with it (CBS statistical areas) - never a guess (KP-21)
+    desc = cfg_field.get("Description") or (exp or {}).get("Description") or (shipped or {}).get(name.strip().upper())
     auto_doc = None
     if not desc and hint and hint.get("auto"):
         desc, auto_doc = hint["auto"]["text"], hint["auto"]["doc"]
@@ -299,8 +302,10 @@ def build_metadata(folder: str | Path, spec: Spec, config: Optional[dict] = None
         fields_cfg = {k.lower(): v for k, v in (fcfg.get("fields") or {}).items()}
         field_hints = (dh.get("fields") or {}) if not gis else ((gis.get("doc_hints") or {}).get("fields") or dh.get("fields") or {})
         fl["File fields"] = []
+        shipped = spec.shipped_field_descriptions(ef)
         for col in cols:
-            fe = _field_entry(col, fields_cfg.get(col["name"].lower(), {}), exp_fields.get(col["name"].lower()), field_hints.get(col["name"]))
+            fe = _field_entry(col, fields_cfg.get(col["name"].lower(), {}), exp_fields.get(col["name"].lower()),
+                              field_hints.get(col["name"]), shipped)
             if fe["Description"] == TODO:
                 todo.append(f"{name}.{col['name']}: Description")
             if fe.pop("_auto_doc", None):

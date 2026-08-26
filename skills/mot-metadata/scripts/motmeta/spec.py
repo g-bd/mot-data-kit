@@ -46,6 +46,7 @@ class Spec:
         self.survey = self._merge(self.base["survey"], self.profile.get("survey_override", []))
         self.file = self._merge(self.base["file"], self.profile.get("file_extra", []))
         self.field = copy.deepcopy(self.base["field"])
+        self._shipped_desc: dict[str, dict[str, str]] = {}
 
     # ---- merge helpers -------------------------------------------------------
     @staticmethod
@@ -126,6 +127,20 @@ class Spec:
     def is_delivery_file(self, name: str) -> bool:
         base = re.sub(r"[​-‏‪-‮﻿]", "", Path(name).name)
         return any(re.search(p, base, re.I) for p in self.delivery_patterns)
+
+    def shipped_field_descriptions(self, ef: Optional[dict]) -> dict[str, str]:
+        """Field descriptions the profile SHIPS for a standard third-party layer
+        (`field_descriptions_file`), keyed upper-case. Nobody in this kit authored the
+        layer, so nobody in this kit invents its field descriptions - the file carries
+        the publisher's own text and its source. Empty when the profile ships none."""
+        fname = (ef or {}).get("field_descriptions_file")
+        if not fname or not self.profile_path:
+            return {}
+        if fname not in self._shipped_desc:
+            p = self.profile_path.parent / fname
+            data = _load(p) if p.exists() else {}
+            self._shipped_desc[fname] = {k.upper(): v for k, v in (data.get("fields") or {}).items()}
+        return self._shipped_desc[fname]
 
     def describe(self) -> dict[str, Any]:
         d = {"guideline": self.base["spec"], "profile": self.profile_name}
