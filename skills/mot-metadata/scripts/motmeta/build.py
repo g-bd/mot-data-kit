@@ -19,8 +19,28 @@ FORMAT_BY_EXT = {".csv": "CSV", ".txt": "TXT", ".tsv": "TSV", ".xlsx": "XLSX", "
                  ".geojson": "GeoJSON", ".shp": "SHP", ".gpkg": "GPKG", ".zip": "ZIP", ".gz": "CSV (gzip)", ".parquet": "Parquet", ".dbf": "DBF"}
 
 
-def default_config(profile: Optional[str] = None) -> dict:
-    """Template for metadata-config.json (the intake answers)."""
+def default_config(profile: Optional[str] = None, spec: Optional[Spec] = None) -> dict:
+    """Template for metadata-config.json (the intake answers).
+
+    When a `spec` is given, every key the merged dictionary marks required / required* is
+    seeded EMPTY, header keys under `header` and survey keys under `survey` (KP-14). The key
+    NAMES are the spec's, so a human filling the template by hand does not have to guess a
+    spelling the validator is case- and space-sensitive about. Seeding a name is not
+    inventing an answer: the value stays "" and is still reported as TODO until answered."""
+    cfg = _blank_config(profile)
+    if spec is not None:
+        survey_keys = {it["key"] for it in spec.survey}
+        for it in spec.header_keys(include_survey=True):
+            if it["key"] in ("Files", "Files list", "Key list", "Size", "Metadata creation date"):
+                continue
+            if it["status"] not in ("required", "required*"):
+                continue
+            target = cfg["survey"] if it["key"] in survey_keys else cfg["header"]
+            target.setdefault(it["key"], [] if it.get("kind") in ("block", "array", "files") else "")
+    return cfg
+
+
+def _blank_config(profile: Optional[str] = None) -> dict:
     return {
         "profile": profile or None,
         "dataset_kind": "survey | monitoring | administrative | gis | model | other",
@@ -160,7 +180,10 @@ def _field_entry(col: dict, cfg_field: dict, exp: Optional[dict], hint: Optional
     values = cfg_field.get("Values") or (exp or {}).get("Values")
     if values:
         fld["Values"] = [{"value": str(v.get("value", "")), "label": v.get("label", ""), "comment": v.get("comment", "")} for v in values]
-    elif col.get("candidate_values") and ftype not in ("Date", "Time", "DateTime", "Real") and not cfg_field and not exp             and (len(col["candidate_values"]) <= 8 or re.search(r"type|code|kind|status|flag|class|categ|mode|dir", name, re.I)):
+    elif col.get("candidate_values") and ftype not in ("Date", "Time", "DateTime", "Real") and "(key)" not in ftype             and not cfg_field and not exp             and (len(col["candidate_values"]) <= 8 or re.search(r"type|code|kind|status|flag|class|categ|mode|dir", name, re.I)):
+        # KP-22: never build a Values table for a KEY column. A zone code or a stop code is an
+        # open set of thousands; a list built from one file would make every value outside it
+        # an error. For a key the JOIN is what can be checked, and that is what --deep does.
         # unknown field with few distinct values -> probably coded: list the values, labels left for the user
         fld["Values"] = [{"value": str(v), "label": TODO, "comment": ""} for v in col["candidate_values"]]
         fld["_auto_values"] = True

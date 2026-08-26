@@ -102,8 +102,8 @@ def cmd_init(a) -> int:
     if cfg_path.exists() and not a.force:
         _out(f"{cfg_path} already exists (use --force to overwrite)")
         return 0
-    cfg = default_config(a.profile)
     spec = Spec(a.profile)
+    cfg = default_config(a.profile, spec)
     s = scan_folder(folder)
     cfg["dataset_name"] = re.sub(r"[^A-Za-z0-9_]+", "_", folder.name).strip("_") or "dataset"
     if spec.dataset_kind:

@@ -203,6 +203,12 @@ def _scan_index(scan: Optional[dict]) -> dict[str, dict]:
     return idx
 
 
+def _bbox_text_local(bbox) -> str:
+    if not bbox or len(bbox) < 4:
+        return ""
+    return ", ".join(str(v) for v in bbox[:4])
+
+
 def _is_delivery(name: str, spec: Spec) -> bool:
     """The file itself is a delivery container, or it is a member of one."""
     n = _norm_file(name)
@@ -325,6 +331,16 @@ def check_files(meta: dict, spec: Spec, scan: Optional[dict], fx: Findings) -> N
                     fx.add("warning", "files", where, "crs_mismatch", f"Spatial reference system = '{got}' אך קובץ ה-.prj מצביע על {want}")
             if e and e.get("geometry_type") and not _empty(fl.get("Geographic type")) and to_text(fl["Geographic type"]).lower() != str(e["geometry_type"]).lower():
                 fx.add("warning", "files", where, "geom_mismatch", f"Geographic type = '{fl['Geographic type']}' אך השכבה היא {e['geometry_type']}")
+            # KP-7: a bounding box whose min equals its max describes a point, not a layer.
+            nums = [x for x in re.findall(r"-?\d+(?:\.\d+)?", to_text(fl.get("Geographic bounding")))]
+            if len(nums) >= 4:
+                x0, y0, x1, y1 = (float(v) for v in nums[:4])
+                if x0 == x1 and y0 == y1:
+                    real = _bbox_text_local(e.get("bbox") if e else None)
+                    fx.add("warning", "files", where, "bbox_degenerate",
+                           f"Geographic bounding מתאר נקודה אחת ({x0}, {y0}) ולא תיבה חוסמת",
+                           "מינימום שווה למקסימום בשני הצירים",
+                           f"התיבה האמיתית של השכבה: {real}" if real else "קרא את התיבה החוסמת מהשכבה עצמה")
             if e and e.get("dbf_hebrew_suspect"):
                 fx.add("warning", "files", where, "dbf_encoding", "ייתכן שקידוד העברית ב-.dbf אינו נקרא כראוי (חסר .cpg?)", "", "הוסף קובץ .cpg עם הקידוד (UTF-8 / 1255)")
         # format Table 5: a DELIVERY container (GTFS / licensing zip) is carried through
@@ -500,9 +516,23 @@ def check_fields(fl: dict, e: Optional[dict], spec: Spec, fx: Findings, where: s
 
 
 # --------------------------------------------------------------------------- deep (opt-in) checks
-def check_values_vs_data(meta: dict, scan: Optional[dict], fx: Findings) -> None:
-    """Documented Values lists vs the codes actually present in the column."""
+def check_values_vs_data(meta: dict, spec: Spec, scan: Optional[dict], fx: Findings) -> None:
+    """Documented Values lists vs the codes actually present in the column.
+
+    KP-22: an open id column is skipped. A column typed `*(key)`, or one that appears in
+    the declared `Key list`, indexes something - `zone_id_dest` is a statistical-area code,
+    an open set of thousands - so "a value not in the list" says nothing about it. Its
+    documented codes are the SPECIAL ones (-1..-4), not an enumeration. For a key the join
+    is the check that means something (`--deep joins`, `--deep zones`).
+    """
     idx = _scan_index(scan)
+    in_keys: set = set()
+    for raw in as_lines(meta.get("Key list")):
+        m = KEY_RE.match(to_text(raw).replace("​", ""))
+        if m:
+            in_keys |= {(_norm_file(m.group(1)), field_key(m.group(2))), (_norm_file(m.group(3)), field_key(m.group(4)))}
+    accepted = {to_text(v.get("value")).lower()
+                for v in ((spec.profile.get("accepted_tokens") or {}).get("values") or [])}
     for fl in meta.get("Files", []):
         name = to_text(fl.get("File name"))
         e = idx.get(_norm_file(name)) or idx.get(_norm_file(Path(name).name))
@@ -514,6 +544,11 @@ def check_values_vs_data(meta: dict, scan: Optional[dict], fx: Findings) -> None
             if not vals:
                 continue
             fname = to_text(fd.get("Name"))
+            if "(key)" in to_text(fd.get("Type")).lower() or (_norm_file(name), field_key(fname)) in in_keys:
+                fx.add("info", "fields", f"{name}.{fname}", "values_open_key",
+                       f"'{fname}' הוא שדה מפתח – רשימת הערכים שלו אינה סגורה ולא נבדקה מול הקובץ",
+                       "הערכים המתועדים הם הקודים המיוחדים בלבד; את הקישור עצמו בודקים ב---deep joins / --deep zones")
+                continue
             c = cols.get(fname.lower().strip())
             if not c:
                 continue
@@ -524,7 +559,9 @@ def check_values_vs_data(meta: dict, scan: Optional[dict], fx: Findings) -> None
                 continue
             documented = {to_text(v.get("value")) for v in vals if to_text(v.get("value")) != ""}
             actual_set = {str(a) for a in actual}
-            undocumented = sorted(actual_set - documented)
+            # tokens the profile accepts everywhere (Null, not_recorded) are a category,
+            # not an undocumented code (FP-11)
+            undocumented = sorted(a for a in actual_set - documented if a.strip().lower() not in accepted)
             unused = sorted(documented - actual_set)
             if undocumented:
                 fx.add("error", "fields", f"{name}.{fname}", "value_undocumented",
@@ -773,6 +810,20 @@ def check_profile(meta: dict, spec: Spec, scan: Optional[dict], fx: Findings) ->
         if ef:
             present.setdefault(ef["name"], []).append(n)
     relaxed, relax_why = _relaxed_required(meta, spec, present)
+    # KP-10: propose Survey completeness and say why. NEVER write it - the author confirms
+    # what the survey is; the kit only points out what the folder looks like.
+    comp_item = next((it for it in spec.survey if it["key"] == "Survey completeness"), None)
+    if comp_item and _empty(meta.get("Survey completeness")):
+        data_files = [ef["name"] for ef in spec.expected_files
+                      if not ef.get("metadata") and not ef.get("related_doc")]
+        if "obod.csv" not in present:
+            fx.add("info", "survey", "Survey completeness", "completeness_suggested",
+                   "נראה שזהו סקר ספירות בלבד: אין obod.csv בחבילה – שקול Survey completeness = 'חלקי'",
+                   "טבלה 5: obod.csv הוא קובץ השאלונים", "אשר את הערך וכתוב אותו במטא-דאטה")
+        elif all(n in present for n in data_files):
+            fx.add("info", "survey", "Survey completeness", "completeness_suggested",
+                   "כל קובצי טבלה 5 נמצאים בחבילה – שקול Survey completeness = 'מלא'",
+                   ", ".join(data_files), "אשר את הערך וכתוב אותו במטא-דאטה")
     for ef in spec.expected_files:
         if ef.get("metadata"):
             continue
@@ -800,6 +851,15 @@ def check_profile(meta: dict, spec: Spec, scan: Optional[dict], fx: Findings) ->
             exp = {field_key(k): v for k, v in exp.items()}
             for key, xf in exp.items():
                 if key not in have:
+                    if xf.get("distribution") is False:
+                        # KP-9: `required*` means two different things, and this is the second:
+                        # the field is required of the SURVEY and forbidden in the file that is
+                        # DISTRIBUTED (name, address, coordinates). Its absence is the format
+                        # being obeyed - reporting it as missing was the exact opposite.
+                        fx.add("info", "profile", f"{fname}.{xf['Name']}", "field_not_distributed",
+                               f"'{xf['Name']}' אינו מופיע ב-{fname}, כנדרש: שדה מזהה שאינו נכלל בקובץ ההפצה",
+                               xf.get("Description", ""), "", FORMAT_EXEMPT)
+                        continue
                     sev = "error" if xf["status"] == "required" else ("warning" if xf["status"] == "required*" else "info")
                     fx.add(sev, "profile", f"{fname}.{xf['Name']}", "expected_field_missing", f"שדה {'חובה' if sev == 'error' else 'צפוי'} '{xf['Name']}' חסר ב-{fname}", xf.get("Description", ""))
                 else:
@@ -909,7 +969,7 @@ def validate(meta: dict, spec: Spec, folder: Optional[Path] = None, scan: Option
     if "all" in deep:
         deep |= {"values", "temporal", "joins", "zones"}
     if "values" in deep:
-        check_values_vs_data(meta, scan, fx)
+        check_values_vs_data(meta, spec, scan, fx)
     if "temporal" in deep:
         check_temporal_vs_data(meta, scan, fx)
     if "joins" in deep:

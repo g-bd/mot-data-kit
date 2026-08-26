@@ -689,9 +689,9 @@
         {
           "Name": "orig_lat_lon",
           "Type": "Text",
-          "status": "required",
+          "status": "required*",
           "Description": "קואורדינטות – מוצא",
-          "Comments": "WGS84, מופרדות בפסיק",
+          "Comments": "WGS84, מופרדות בפסיק. נדרש בקובץ העבודה ואסור בקובץ ההפצה (סעיף 3.4).",
           "distribution": false
         },
         {
@@ -771,9 +771,9 @@
         {
           "Name": "dest_lat_lon",
           "Type": "Text",
-          "status": "required",
+          "status": "required*",
           "Description": "קואורדינטות – יעד",
-          "Comments": "WGS84",
+          "Comments": "WGS84. נדרש בקובץ העבודה ואסור בקובץ ההפצה (סעיף 3.4).",
           "distribution": false
         },
         {
