@@ -15,7 +15,7 @@ from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any, Optional
 
-from .scan import check_name, name_style, read_column_values, scan_folder
+from .scan import FIELD_DIRT_HE, check_name, field_dirt, field_key, name_style, norm_field, read_column_values, scan_folder
 from .spec import Spec
 from .io import as_lines, split_keywords, to_text
 
@@ -360,7 +360,11 @@ def check_fields(fl: dict, e: Optional[dict], spec: Spec, fx: Findings, where: s
             fx.add("info", "fields", where, "scan_error", f"לא ניתן לקרוא את הקובץ לצורך השוואה: {e['error']}")
             return
         inv = lambda x: re.sub(r"[​-‏‪-‮﻿]", "", x)
-        key = lambda x: inv(x).lower().strip()
+        # KP-2: a header is matched after the typographic dirt is removed - a stray `?`,
+        # a zero-width character, `last _bus_stop`, an NBSP, case - so a field that IS in
+        # the file is never reported as missing. The dirt itself is still reported, with
+        # the canonical name, so it can be fixed.
+        key = field_key
         al, ml = {key(a): a for a in actual}, {key(n): n for n in names}
         for a in actual:
             if key(a) not in ml:
@@ -380,6 +384,14 @@ def check_fields(fl: dict, e: Optional[dict], spec: Spec, fx: Findings, where: s
                 fx.add("warning", "fields", f"{where}.{inv(n)}", "field_name_invisible", f"שם השדה '{inv(n)}' במטא-דאטה מכיל תווים בלתי נראים (ZWSP/RLM)", "", "הקלד את השם מחדש בתא")
             elif al[key(n)] != n:
                 fx.add("warning", "fields", f"{where}.{n}", "field_case", f"שם השדה במטא-דאטה '{n}' שונה באותיות/רווחים מהקובץ '{al[key(n)]}'")
+        # the header as the FILE spells it: report the dirt, and the clean name to use
+        for a in actual:
+            dirt = field_dirt(a)
+            if dirt:
+                fx.add("warning", "fields", f"{where}.{norm_field(a)}", "field_alias",
+                       f"שם השדה בקובץ הוא '{a}' – השם התקני הוא '{norm_field(a)}'",
+                       "נמצא: " + ", ".join(FIELD_DIRT_HE.get(d, d) for d in dirt),
+                       f"שנה את הכותרת בקובץ ל-'{norm_field(a)}' (הערכה זיהתה את השדה למרות ההבדל)")
         # type plausibility
         by = {key(c["name"]): c for c in (e.get("fields") or [])}
         for f in fields:
@@ -635,12 +647,21 @@ def check_profile(meta: dict, spec: Spec, scan: Optional[dict], fx: Findings) ->
             continue
         for fname in present[ef["name"]]:
             fl = next(f for f in meta["Files"] if to_text(f.get("File name")) == fname)
-            have = {to_text(f.get("Name")).lower(): f for f in fl.get("File fields", [])}
+            # KP-2: match the format's dictionary against the NORMALISED header, so a
+            # field that is present but dirtily spelled is never reported as missing
+            have = {field_key(to_text(f.get("Name"))): f for f in fl.get("File fields", [])}
+            exp = {field_key(k): v for k, v in exp.items()}
             for key, xf in exp.items():
                 if key not in have:
                     sev = "error" if xf["status"] == "required" else ("warning" if xf["status"] == "required*" else "info")
                     fx.add(sev, "profile", f"{fname}.{xf['Name']}", "expected_field_missing", f"שדה {'חובה' if sev == 'error' else 'צפוי'} '{xf['Name']}' חסר ב-{fname}", xf.get("Description", ""))
                 else:
+                    got_name = to_text(have[key].get("Name"))
+                    if got_name and got_name != xf["Name"] and field_key(got_name) == field_key(xf["Name"]):
+                        fx.add("warning", "profile", f"{fname}.{xf['Name']}", "field_alias",
+                               f"השדה נכתב '{got_name}' – בפורמט שמו '{xf['Name']}'",
+                               "; ".join(FIELD_DIRT_HE.get(d, d) for d in field_dirt(got_name)) or "הבדל באותיות גדולות/קטנות",
+                               f"תעד ושמור את השדה בשם '{xf['Name']}'")
                     t = to_text(have[key].get("Type")).lower()
                     if t and xf.get("Type") and t != xf["Type"].lower():
                         fx.add("info", "profile", f"{fname}.{xf['Name']}", "expected_type_differs", f"'{xf['Name']}' מוגדר {have[key].get('Type')} ואילו הפורמט מגדיר {xf['Type']}")

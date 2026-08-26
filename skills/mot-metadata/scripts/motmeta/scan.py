@@ -55,6 +55,55 @@ def strip_invisible(text: str) -> str:
     return INVISIBLE_RE.sub("", str(text)).strip()
 
 
+_TRAILING_Q_RE = re.compile(r"[?？]+$")
+_UNDERSCORE_SPACE_RE = re.compile(r"\s*_\s*")
+
+#: What `norm_field` had to remove, in the order it is reported. These are the ONLY
+#: differences the kit treats as the same name: they are typography, not vocabulary.
+#: A synonym (`boarding` for `boardings`) is deliberately NOT here - the kit does not
+#: decide that one contractor's column "is" another column.
+FIELD_DIRT_HE = {
+    "invisible_chars": "תווים בלתי נראים (ZWSP/RLM/BOM)",
+    "nbsp": "רווח קשיח (NBSP)",
+    "trailing_question_mark": "סימן שאלה בסוף השם",
+    "space_around_underscore": "רווח לצד קו תחתון",
+    "double_space": "רווחים כפולים",
+    "case": "אותיות גדולות/קטנות",
+}
+
+
+def norm_field(name: str) -> str:
+    """A field name with the typographic dirt removed - `last _bus_stop ?` -> `last_bus_stop`."""
+    n = INVISIBLE_RE.sub("", str(name)).replace(" ", " ")
+    n = _TRAILING_Q_RE.sub("", n).strip()
+    n = _UNDERSCORE_SPACE_RE.sub("_", n)
+    return re.sub(r"\s+", " ", n).strip()
+
+
+def field_key(name: str) -> str:
+    """Case-folded normalised name, for matching a header against a dictionary."""
+    return norm_field(name).lower()
+
+
+def field_dirt(name: str) -> list[str]:
+    """Which normalisations `norm_field` had to apply to *name* (empty = clean)."""
+    raw = str(name)
+    out: list[str] = []
+    if INVISIBLE_RE.search(raw):
+        out.append("invisible_chars")
+    if " " in raw:
+        out.append("nbsp")
+    if _TRAILING_Q_RE.search(raw.strip()):
+        out.append("trailing_question_mark")
+    stripped = INVISIBLE_RE.sub("", raw).replace(" ", " ")
+    stripped = _TRAILING_Q_RE.sub("", stripped).strip()
+    if _UNDERSCORE_SPACE_RE.search(stripped) and "_" in stripped and re.search(r"\s_|_\s", stripped):
+        out.append("space_around_underscore")
+    if "  " in stripped:
+        out.append("double_space")
+    return out
+
+
 def looks_like_column_name(cell: str) -> bool:
     """Could this cell be a column NAME?
 
