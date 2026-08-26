@@ -15,7 +15,7 @@ from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any, Optional
 
-from .scan import FIELD_DIRT_HE, check_name, field_dirt, field_key, name_style, norm_field, read_column_values, scan_folder
+from .scan import FIELD_DIRT_HE, check_name, field_dirt, field_key, name_style, norm_field, read_column_counts, read_column_values, scan_folder
 from .spec import Spec
 from .io import as_lines, split_keywords, to_text
 
@@ -636,6 +636,30 @@ def _is_lookup_side(fname: str, spec: Spec) -> bool:
     return ((_match_expected(fname, spec) or {}).get("key_role") == "lookup")
 
 
+def _format_values(fname: str, col: str, spec: Spec) -> dict[str, str]:
+    """Values the FORMAT itself defines for a field: the profile's `Values`, code -> label.
+
+    Read from the dictionary, never written here - the codes belong to the format (the on-board
+    Table 11 codes for a trip end that is not a zone), and a format that adds or renumbers one
+    must only have to change `profile.json`.
+    """
+    from .build import _match_expected
+    ef = _match_expected(fname, spec) or {}
+    for fd in (ef.get("fields") or []):
+        if field_key(to_text(fd.get("Name"))) == field_key(col):
+            return {to_text(v.get("value")): to_text(v.get("label"))
+                    for v in (fd.get("Values") or []) if to_text(v.get("value")) != ""}
+    return {}
+
+
+def _special_codes_finding(fx: Findings, where: str, present: dict, labels: dict, spec: Spec) -> None:
+    """Say which format-defined codes the column carries, and how many rows each covers."""
+    fx.add("info", "keys", where, "zone_special_codes",
+           f"{sum(present.values())} שורות נושאות קודי אזור מיוחדים שהפורמט מגדיר – אינם נספרים כחריגים",
+           "; ".join(f"{c} ({labels.get(c, '')}): {n}" for c, n in sorted(present.items())),
+           to_text(spec.profile.get("special_codes_note") or ""))
+
+
 def check_key_joins(meta: dict, spec: Spec, folder: Optional[Path], fx: Findings, scan: Optional[dict] = None, limit: int = 200000) -> None:
     """Sample both sides of every declared key and report values that do not join.
 
@@ -661,7 +685,8 @@ def check_key_joins(meta: dict, spec: Spec, folder: Optional[Path], fx: Findings
         if flipped:
             fa, ca, fb, cb = fb, cb, fa, ca
         va = read_column_values(folder, fa, ca, limit)
-        vb = read_column_values(folder, fb, cb, limit)
+        cnt_b = read_column_counts(folder, fb, cb, limit)
+        vb = None if cnt_b is None else set(cnt_b)
         if va is None or vb is None:
             idx = _scan_index(scan)
             missing = []
@@ -679,13 +704,21 @@ def check_key_joins(meta: dict, spec: Spec, folder: Optional[Path], fx: Findings
             continue
         if not va or not vb:
             continue
-        orphans = sorted(vb - va)
+        # KP-27: codes the FORMAT itself defines for the referencing column index nothing in the
+        # lookup table by design. They are reported with their counts and left out of the orphan
+        # arithmetic - both the numerator and what it is a percentage of.
+        special = _format_values(fb, cb, spec) if (_is_lookup_side(fa, spec) or _is_lookup_side(fb, spec)) else {}
+        present = {c: cnt_b[c] for c in special if c in cnt_b}
+        if present:
+            _special_codes_finding(fx, declared, present, special, spec)
+        checked = vb - set(special)
+        orphans = sorted(checked - va)
         if orphans:
-            pct = round(100 * len(orphans) / max(len(vb), 1), 1)
-            lookup_like = len(va) < 0.5 * len(vb) and pct > 50
+            pct = round(100 * len(orphans) / max(len(checked), 1), 1)
+            lookup_like = len(va) < 0.5 * len(checked) and pct > 50
             if lookup_like:
                 fx.add("info", "keys", declared, "join_lookup_like",
-                       f"רק {len(va)} ערכים ב-{fa}.{ca} מול {len(vb)} ב-{fb}.{cb} – נראה כטבלת הערות/לוקאפ ולא כמפתח מלא",
+                       f"רק {len(va)} ערכים ב-{fa}.{ca} מול {len(checked)} ב-{fb}.{cb} – נראה כטבלת הערות/לוקאפ ולא כמפתח מלא",
                        "דוגמאות שאינן מקושרות: " + ", ".join(orphans[:6]),
                        "אם זו טבלת הערות (כמו ימים מיוחדים) – הסר אותה מרשימת המפתחות או תאר את הקשר ב-Comments")
                 continue
@@ -696,7 +729,7 @@ def check_key_joins(meta: dict, spec: Spec, folder: Optional[Path], fx: Findings
                    + (f" · הקישור נבדק בכיוון השימוש: {fb}.{cb} מול {fa}.{ca}" if flipped else ""),
                    "בדוק את הקישור בין הקבצים או את הגדרת המפתח")
         else:
-            fx.add("info", "keys", declared, "join_ok", f"הקישור תקין ({len(vb)} ערכים נבדקו)",
+            fx.add("info", "keys", declared, "join_ok", f"הקישור תקין ({len(checked)} ערכים נבדקו)",
                    f"נבדק בכיוון השימוש: {fb}.{cb} מול {fa}.{ca}" if flipped else "")
 
 
@@ -745,28 +778,37 @@ def check_zone_codes(meta: dict, spec: Spec, folder: Optional[Path], fx: Finding
     if not zone_values:
         fx.add("info", "keys", f"{zone_file}.{matched}", "zones_unreadable", "לא ניתן היה לקרוא את ערכי המפתח מהשכבה")
         return
-    # the documented out-of-area codes (-1..-4) are legitimate and index nothing
-    allowed_extra = set()
-    for fl in meta.get("Files", []):
-        if to_text(fl.get("File name")) != obod_file:
-            continue
-        for fd in fl.get("File fields", []):
-            if field_key(to_text(fd.get("Name"))) in ("zone_id_orig", "zone_id_dest"):
-                allowed_extra |= {to_text(v.get("value")) for v in (fd.get("Values") or [])}
+    # KP-27: the out-of-area codes the FORMAT defines for these columns index nothing in the
+    # layer by design. They come from the profile's own `Values` - not from a list written here,
+    # and not only from what this package happened to document - and a package that documents
+    # further codes of its own keeps them recognised too.
     for col in ("zone_id_orig", "zone_id_dest"):
         real = next((to_text(fd.get("Name")) for fl in meta.get("Files", []) if to_text(fl.get("File name")) == obod_file
                      for fd in fl.get("File fields", []) if field_key(to_text(fd.get("Name"))) == col), col)
-        codes = read_column_values(folder, obod_file, real)
-        if not codes:
+        special = dict(_format_values(obod_file, col, spec))
+        for fl in meta.get("Files", []):
+            if to_text(fl.get("File name")) != obod_file:
+                continue
+            for fd in fl.get("File fields", []):
+                if field_key(to_text(fd.get("Name"))) == col:
+                    for v in (fd.get("Values") or []):
+                        special.setdefault(to_text(v.get("value")), to_text(v.get("label")))
+        special.pop("", None)
+        counts = read_column_counts(folder, obod_file, real)
+        if not counts:
             continue
-        unresolved = sorted(c for c in codes if c not in zone_values and c not in allowed_extra)
         where = f"{obod_file}.{real} -> {zone_file}.{matched}"
+        present = {c: counts[c] for c in special if c in counts}
+        if present:
+            _special_codes_finding(fx, where, present, special, spec)
+        checked = set(counts) - set(special)
+        unresolved = sorted(c for c in checked if c not in zone_values)
         if not unresolved:
-            fx.add("info", "keys", where, "zone_codes_ok", f"כל {len(codes)} קודי האזור נפתרים מול השכבה")
+            fx.add("info", "keys", where, "zone_codes_ok", f"כל {len(checked)} קודי האזור נפתרים מול השכבה")
             continue
-        pct = round(100 * len(unresolved) / max(len(codes), 1), 1)
+        pct = round(100 * len(unresolved) / max(len(checked), 1), 1)
         fx.add("error" if pct > 5 else "warning", "keys", where, "zone_code_unresolved",
-               f"{len(unresolved)} מתוך {len(codes)} קודי אזור ({pct}%) אינם קיימים בשדה '{matched}' של השכבה",
+               f"{len(unresolved)} מתוך {len(checked)} קודי אזור ({pct}%) אינם קיימים בשדה '{matched}' של השכבה",
                "דוגמאות: " + ", ".join(unresolved[:8]),
                "ודא שהשכבה המצורפת היא זו שלפיה קודדו המוצאים והיעדים, או תעד את הקודים החורגים ב-Values")
 
