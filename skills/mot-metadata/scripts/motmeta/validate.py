@@ -553,6 +553,77 @@ def check_key_joins(meta: dict, folder: Optional[Path], fx: Findings, scan: Opti
             fx.add("info", "keys", f"{fa}.{ca} -> {fb}.{cb}", "join_ok", f"הקישור תקין ({len(vb)} ערכים נבדקו)")
 
 
+def check_zone_codes(meta: dict, spec: Spec, folder: Optional[Path], fx: Findings, scan: Optional[dict] = None) -> None:
+    """Do the documented zone codes resolve against the zones layer this package ships?
+
+    The profile used to assume the layer's key is called `zone_id`, and reported
+    `key_field_missing` against every layer that spells it `YISHUV_STA` - a defect in the
+    profile, not in the package. So the key is found from a candidate list, the field that
+    matched is named, and then the codes are actually RESOLVED. This is the same question
+    `--deep joins` asks of any declared key; it says nothing about whether a zone code is
+    the RIGHT one, only whether the layer this package ships indexes it.
+    """
+    from .build import _match_expected
+    if folder is None:
+        return
+    zones_ef = next((ef for ef in spec.expected_files if ef.get("gis") and ef.get("zones_key_candidates")), None)
+    if not zones_ef:
+        return
+    idx = _scan_index(scan)
+    zone_file = next((to_text(f.get("File name")) for f in meta.get("Files", [])
+                      if (_match_expected(to_text(f.get("File name")), spec) or {}).get("name") == zones_ef["name"]), None)
+    obod_file = next((to_text(f.get("File name")) for f in meta.get("Files", [])
+                      if (_match_expected(to_text(f.get("File name")), spec) or {}).get("name") == "obod.csv"), None)
+    if not zone_file or not obod_file:
+        return
+    e = idx.get(_norm_file(zone_file)) or idx.get(_norm_file(Path(zone_file).name))
+    layer = e
+    if e and e.get("format") == "ZIP" and e.get("inner"):
+        shp = [v for k, v in e["inner"].items() if k.lower().endswith(".shp")]
+        layer = shp[0] if shp else e
+    actual = [c["name"] for c in ((layer or {}).get("fields") or [])]
+    have = {field_key(a): a for a in actual}
+    matched = next((have[field_key(c)] for c in zones_ef["zones_key_candidates"] if field_key(c) in have), None)
+    if not matched:
+        fx.add("info", "keys", f"{zone_file}", "zones_key_not_found",
+               "לא נמצא בשכבת האזורים שדה מפתח מוכר",
+               "השדות בשכבה: " + ", ".join(actual[:12]) + ("..." if len(actual) > 12 else ""),
+               "שנה את שם שדה המפתח ל-zone_id, כפי שהפורמט מבקש (טבלה 12)")
+        return
+    fx.add("info", "keys", f"{zone_file}.{matched}", "zones_key_resolved",
+           f"מפתח שכבת האזורים זוהה כ-'{matched}'",
+           "מועמדים שנבדקו: " + ", ".join(zones_ef["zones_key_candidates"]),
+           "" if matched.lower() == "zone_id" else "הפורמט מבקש ששם השדה יהיה zone_id (טבלה 12)")
+    zone_values = read_column_values(folder, zone_file, matched)
+    if not zone_values:
+        fx.add("info", "keys", f"{zone_file}.{matched}", "zones_unreadable", "לא ניתן היה לקרוא את ערכי המפתח מהשכבה")
+        return
+    # the documented out-of-area codes (-1..-4) are legitimate and index nothing
+    allowed_extra = set()
+    for fl in meta.get("Files", []):
+        if to_text(fl.get("File name")) != obod_file:
+            continue
+        for fd in fl.get("File fields", []):
+            if field_key(to_text(fd.get("Name"))) in ("zone_id_orig", "zone_id_dest"):
+                allowed_extra |= {to_text(v.get("value")) for v in (fd.get("Values") or [])}
+    for col in ("zone_id_orig", "zone_id_dest"):
+        real = next((to_text(fd.get("Name")) for fl in meta.get("Files", []) if to_text(fl.get("File name")) == obod_file
+                     for fd in fl.get("File fields", []) if field_key(to_text(fd.get("Name"))) == col), col)
+        codes = read_column_values(folder, obod_file, real)
+        if not codes:
+            continue
+        unresolved = sorted(c for c in codes if c not in zone_values and c not in allowed_extra)
+        where = f"{obod_file}.{real} -> {zone_file}.{matched}"
+        if not unresolved:
+            fx.add("info", "keys", where, "zone_codes_ok", f"כל {len(codes)} קודי האזור נפתרים מול השכבה")
+            continue
+        pct = round(100 * len(unresolved) / max(len(codes), 1), 1)
+        fx.add("error" if pct > 5 else "warning", "keys", where, "zone_code_unresolved",
+               f"{len(unresolved)} מתוך {len(codes)} קודי אזור ({pct}%) אינם קיימים בשדה '{matched}' של השכבה",
+               "דוגמאות: " + ", ".join(unresolved[:8]),
+               "ודא שהשכבה המצורפת היא זו שלפיה קודדו המוצאים והיעדים, או תעד את הקודים החורגים ב-Values")
+
+
 # --------------------------------------------------------------------------- keys
 def check_keys(meta: dict, fx: Findings) -> None:
     files = {_norm_file(to_text(f.get("File name"))): f for f in meta.get("Files", [])}
@@ -759,13 +830,15 @@ def validate(meta: dict, spec: Spec, folder: Optional[Path] = None, scan: Option
     check_documents(meta, spec, scan, fx)
     deep = {x.lower() for x in (deep or set())}
     if "all" in deep:
-        deep |= {"values", "temporal", "joins"}
+        deep |= {"values", "temporal", "joins", "zones"}
     if "values" in deep:
         check_values_vs_data(meta, scan, fx)
     if "temporal" in deep:
         check_temporal_vs_data(meta, scan, fx)
     if "joins" in deep:
         check_key_joins(meta, folder, fx, scan)
+    if "zones" in deep:
+        check_zone_codes(meta, spec, folder, fx, scan)
     seen, uniq = set(), Findings()
     for f in fx:
         k = (f["severity"], f["code"], f["where"], f["msg"])
