@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import re
 from collections import Counter
+from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any, Optional
 
@@ -668,6 +669,38 @@ def check_profile(meta: dict, spec: Spec, scan: Optional[dict], fx: Findings) ->
     pass
 
 
+# --------------------------------------------------------------------------- expected documents
+def check_documents(meta: dict, spec: Spec, scan: Optional[dict], fx: Findings) -> None:
+    """The documents a survey is delivered WITH (KP-26).
+
+    Warning at most, never an error: a package with no methodology paper is still a
+    package, and refusing a survey over its contractor's paperwork is not what a
+    metadata validator is for. The point is that the absence is STATED and counted.
+    The summary report IS the methodology - the sampling frame, the expansion method
+    and the field procedure are chapters of it - so one item is answered by either.
+    """
+    block = spec.profile.get("expected_documents") or {}
+    items = block.get("items") or []
+    if not items:
+        return
+    have = [to_text(d) for d in as_lines(meta.get("Related documents"))]
+    if scan:
+        have += list(scan.get("documents") or [])
+    have = [_norm_file(h) for h in have if to_text(h) and not URL_RE.match(to_text(h))]
+    ds = Path(to_text(meta.get("Dataset file")) or "").stem or Path((scan or {}).get("folder", "") or "").name
+    for it in items:
+        pats = [p.replace("{dataset}", ds or "*") for p in (it.get("any_of") or [])]
+        hit = next((h for h in have for p in pats if fnmatch(Path(h).name, p.lower())), None)
+        if hit:
+            fx.add("info", "profile", it["id"], "document_present",
+                   f"{it.get('he', it['id'])}: נמצא '{Path(hit).name}'")
+        else:
+            fx.add(it.get("severity", "warning"), "profile", it["id"], "document_missing",
+                   f"לא נמצא {it.get('he', it['id'])} בחבילה",
+                   block.get("report_is_methodology", "") if it["id"] == "report" else block.get("note", ""),
+                   "צרף את המסמך לתיקייה ורשום אותו ב-Related documents")
+
+
 # --------------------------------------------------------------------------- naming of files
 def check_file_names(meta: dict, fx: Findings) -> None:
     for fl in meta.get("Files", []):
@@ -702,6 +735,7 @@ def validate(meta: dict, spec: Spec, folder: Optional[Path] = None, scan: Option
     check_keys(meta, fx)
     check_file_names(meta, fx)
     check_profile(meta, spec, scan, fx)
+    check_documents(meta, spec, scan, fx)
     deep = {x.lower() for x in (deep or set())}
     if "all" in deep:
         deep |= {"values", "temporal", "joins"}
