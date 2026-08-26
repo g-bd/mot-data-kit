@@ -630,8 +630,25 @@ def check_temporal_vs_data(meta: dict, scan: Optional[dict], fx: Findings) -> No
                f"טווח הזמן תואם לנתונים ({data_span[0]}–{data_span[1]})", detail)
 
 
-def check_key_joins(meta: dict, folder: Optional[Path], fx: Findings, scan: Optional[dict] = None, limit: int = 200000) -> None:
-    """Sample both sides of every declared key and report values that do not join."""
+def _is_lookup_side(fname: str, spec: Spec) -> bool:
+    """Is this file a lookup (dimension) table the profile declares - `key_role: lookup`?"""
+    from .build import _match_expected
+    return ((_match_expected(fname, spec) or {}).get("key_role") == "lookup")
+
+
+def check_key_joins(meta: dict, spec: Spec, folder: Optional[Path], fx: Findings, scan: Optional[dict] = None, limit: int = 200000) -> None:
+    """Sample both sides of every declared key and report values that do not join.
+
+    A key line names two sides; which of them is the PARENT is not the arrow's direction but
+    which one holds the domain. `A.x -> B.y` normally means B references A, and the finding is
+    B's values that A does not have. The on-board format writes the zone relation the other way
+    round - `obod.csv.zone_id_orig -> zones.zip.zone_id` - because it reads as "the code column
+    points at the layer"; judged as written that counts every zone nobody travelled to, which
+    for a national layer is most of it, while the lookup-like escape hatch below hid exactly the
+    same thing for every survey covering a smaller slice. A file the profile marks
+    `key_role: lookup` is therefore the parent whichever side of the arrow it is written on
+    (KP-31).
+    """
     if folder is None:
         return
     for raw in as_lines(meta.get("Key list")):
@@ -639,6 +656,10 @@ def check_key_joins(meta: dict, folder: Optional[Path], fx: Findings, scan: Opti
         if not m:
             continue
         fa, ca, fb, cb = (x.strip() for x in m.groups())
+        declared = f"{fa}.{ca} -> {fb}.{cb}"
+        flipped = _is_lookup_side(fb, spec) and not _is_lookup_side(fa, spec)
+        if flipped:
+            fa, ca, fb, cb = fb, cb, fa, ca
         va = read_column_values(folder, fa, ca, limit)
         vb = read_column_values(folder, fb, cb, limit)
         if va is None or vb is None:
@@ -653,7 +674,7 @@ def check_key_joins(meta: dict, folder: Optional[Path], fx: Findings, scan: Opti
                         missing.append(f"השדה '{c_}' לא קיים בקובץ '{f_}'")
                     else:
                         missing.append(f"לא ניתן לקרוא את '{f_}' (פורמט לא נתמך לקריאת ערכים)")
-            fx.add("info", "keys", f"{fa}.{ca} -> {fb}.{cb}", "join_unreadable",
+            fx.add("info", "keys", declared, "join_unreadable",
                    "לא ניתן לבדוק את הקישור: " + "; ".join(missing))
             continue
         if not va or not vb:
@@ -663,17 +684,20 @@ def check_key_joins(meta: dict, folder: Optional[Path], fx: Findings, scan: Opti
             pct = round(100 * len(orphans) / max(len(vb), 1), 1)
             lookup_like = len(va) < 0.5 * len(vb) and pct > 50
             if lookup_like:
-                fx.add("info", "keys", f"{fa}.{ca} -> {fb}.{cb}", "join_lookup_like",
+                fx.add("info", "keys", declared, "join_lookup_like",
                        f"רק {len(va)} ערכים ב-{fa}.{ca} מול {len(vb)} ב-{fb}.{cb} – נראה כטבלת הערות/לוקאפ ולא כמפתח מלא",
                        "דוגמאות שאינן מקושרות: " + ", ".join(orphans[:6]),
                        "אם זו טבלת הערות (כמו ימים מיוחדים) – הסר אותה מרשימת המפתחות או תאר את הקשר ב-Comments")
                 continue
             sev = "error" if pct > 5 else "warning"
-            fx.add(sev, "keys", f"{fa}.{ca} -> {fb}.{cb}", "join_orphans",
+            fx.add(sev, "keys", declared, "join_orphans",
                    f"{len(orphans)} ערכים ({pct}%) ב-{fb}.{cb} אינם קיימים ב-{fa}.{ca}",
-                   "דוגמאות: " + ", ".join(orphans[:6]), "בדוק את הקישור בין הקבצים או את הגדרת המפתח")
+                   "דוגמאות: " + ", ".join(orphans[:6])
+                   + (f" · הקישור נבדק בכיוון השימוש: {fb}.{cb} מול {fa}.{ca}" if flipped else ""),
+                   "בדוק את הקישור בין הקבצים או את הגדרת המפתח")
         else:
-            fx.add("info", "keys", f"{fa}.{ca} -> {fb}.{cb}", "join_ok", f"הקישור תקין ({len(vb)} ערכים נבדקו)")
+            fx.add("info", "keys", declared, "join_ok", f"הקישור תקין ({len(vb)} ערכים נבדקו)",
+                   f"נבדק בכיוון השימוש: {fb}.{cb} מול {fa}.{ca}" if flipped else "")
 
 
 def check_zone_codes(meta: dict, spec: Spec, folder: Optional[Path], fx: Findings, scan: Optional[dict] = None) -> None:
@@ -983,7 +1007,7 @@ def validate(meta: dict, spec: Spec, folder: Optional[Path] = None, scan: Option
     if "temporal" in deep:
         check_temporal_vs_data(meta, scan, fx)
     if "joins" in deep:
-        check_key_joins(meta, folder, fx, scan)
+        check_key_joins(meta, spec, folder, fx, scan)
     if "zones" in deep:
         check_zone_codes(meta, spec, folder, fx, scan)
     seen, uniq = set(), Findings()

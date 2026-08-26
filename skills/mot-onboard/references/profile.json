@@ -900,6 +900,8 @@
       "desc": "שכבה פוליגונלית של אזורי הסקר (אזורים סטטיסטיים / אזורי תנועה) לקידוד מוצאים ויעדים",
       "pattern": "^zones.*\\.zip$|^statistical_areas.*\\.shp$|^zones.*\\.shp$",
       "gis": true,
+      "key_role": "lookup",
+      "key_role_note": "שכבת האזורים היא טבלת ההיצע (lookup) של הקישור, גם כשהפורמט כותב את שורת המפתח מ-obod.csv אליה. לכן הבדיקה נעשית בכיוון השימוש: קודי האזור שב-obod.csv נבדקים מול מפתח השכבה, ולא להפך. אזור בשכבה שאיש לא נסע אליו אינו ממצא (KP-31).",
       "field_descriptions_file": "cbs-fields.json",
       "zones_key_candidates": [
         "zone_id",
