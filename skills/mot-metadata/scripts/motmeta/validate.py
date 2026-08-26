@@ -813,7 +813,7 @@ def check_profile(meta: dict, spec: Spec, scan: Optional[dict], fx: Findings) ->
     # KP-10: propose Survey completeness and say why. NEVER write it - the author confirms
     # what the survey is; the kit only points out what the folder looks like.
     comp_item = next((it for it in spec.survey if it["key"] == "Survey completeness"), None)
-    if comp_item and _empty(meta.get("Survey completeness")):
+    if comp_item and (_empty(meta.get("Survey completeness")) or _is_todo(meta.get("Survey completeness"))):
         data_files = [ef["name"] for ef in spec.expected_files
                       if not ef.get("metadata") and not ef.get("related_doc")]
         if "obod.csv" not in present:
