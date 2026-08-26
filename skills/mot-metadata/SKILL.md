@@ -52,6 +52,15 @@ a field the format forbids in the distribution file). Counted in `summary.bucket
 report as "הפורמט אינו דורש", never blocking. `summary.todo` carries the build's TODO list, so a
 caller does not have to scrape stdout.
 
+**Unanswered is not the same as unknown.** A required TEXT key may be answered
+`לא ידוע` / `לא ידוע — לא תועד במקורות` / `unknown — not documented in the sources`
+(`references/spec.json → unknown_tokens`): the kit treats it as **answered** — no `todo` — records an
+`info` `value_unknown_documented` so it stays visible, and the report prints it under its own
+heading rather than in the TODO list. An empty cell, `TODO`, `?`, `N/A` are **not** answers and stay
+errors (`value_placeholder`); a key with a shape (date / e-mail / URL) or a closed vocabulary cannot
+be answered this way at all. Write the token only when the user says the value is unknowable — it is
+their statement, not a way to close a finding.
+
 ## Workflow A — create metadata for a folder
 
 1. **Confirm the folder** with the user (absolute path). Ask whether sub-folders belong to the dataset
@@ -151,6 +160,8 @@ the report as a Hebrew RTL document with the same sections and severities.
 ## Boundaries
 
 - Never invent publisher/contact/coverage/descriptions — ask, or leave `TODO` and say so.
+  If the user says a required text value cannot be known, write the documented-unknown token
+  (see above) at their word; never choose it for them to make a finding go away.
 - Never change the user's data files or their original metadata file.
 - Traffic counts (ספירות תנועה) are exempt from the נוהל (§6) and use the uniform counts format
   (v3.0 online); this skill does not cover them.

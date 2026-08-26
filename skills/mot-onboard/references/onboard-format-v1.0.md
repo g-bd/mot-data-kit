@@ -135,6 +135,33 @@ the format is silent or contradicts itself, the kit records both readings and de
 - **`Contractor`** rows may read `<name> — <role>` (`ביצוע` / `ניהול ובקרה` / `המרה לפורמט האחוד`);
   a bare name means `ביצוע`. Accepted, never demanded — the format has not said this yet.
 
+### Added in 0.7.1 (owner rules, 26/08/2026 — the on-board viewer project)
+
+- **The special zone codes are not orphans.** `zone_id_orig` / `zone_id_dest` carry the codes the
+  format defines in Table 11 for a trip end that is not a zone — **−1** חוץ לארץ, **−2** יישובים
+  פלסטיניים, **−3** מחנות צה"ל ושב"ס, **−4** לא ידוע. They index nothing in `zones.zip` **by
+  design**, so they are excluded from `join_orphans` and from `zone_code_unresolved` — from the
+  count and from what the percentage is a percentage of — and reported instead as an `info`
+  `zone_special_codes` with how many rows carry each. The kit reads the codes from the profile's own
+  `Values` for those fields (`profile.json → expected_files → obod.csv`); nothing is written into
+  the code, so a format that adds or renumbers one need only change the dictionary.
+- **The zones join is judged in the direction it is used.** The format writes the key line as
+  `obod.csv.zone_id_orig -> zones.zip.zone_id`, because the code column points at the layer. Read as
+  an ordinary parent → child that counts every zone **nobody travelled to** — 42 % of a national
+  layer for a metro survey, and silently nothing for a smaller one. `zones.zip` now carries
+  `key_role: lookup`, so it is the parent whichever side of the arrow it is written on, and the
+  orphans are the codes the layer does not index.
+- **An unknown contractor is an answer.** `Contractor` (and `Author`, `Contact`) may carry
+  `לא ידוע` / `לא ידוע — לא תועד במקורות` / `unknown — not documented in the sources`: no `todo`, an
+  `info` `value_unknown_documented`, and the row is not split into a name and a role. `?`, `N/A`, an
+  empty cell and `TODO` remain errors. See the base twin, `guidelines-v1.3.md`.
+- **A zones layer that declares no encoding is still read.** A `.dbf` written in Windows-1255 whose
+  code-page byte says only "ANSI" (`0x57`) and which ships no `.cpg` used to fail a strict UTF-8
+  decode, leaving the layer with **zero** documented fields — which no answer in
+  `metadata-config.json` could ever have filled in. The kit now tries the `.cpg`, then UTF-8, then
+  the code page the DBF names, then Windows-1255, and says which it used (`dbf_encoding_assumed`).
+  The format's own remedy is still the right one: ship a `.cpg`.
+
 Still open with the format's author, **not** decided by the kit: the definition of
 `Sample size passengers` (rows in `obod` or passengers counted in `obad` — they differ by a factor of
 three) and of `Response rate` (two ratios in use, differing 2×).

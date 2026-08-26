@@ -141,3 +141,23 @@ Key example (Figure 4): `trips.csv.trip_id_unique -> obad.csv.trip_id_unique`.
 ## §6 Exceptions
 Traffic counts (ספירות תנועה) have their own metadata: "פורמט אחוד לספירות תנועה" (נוהל cites v2.01; gov.il now
 hosts v3.0) — https://www.gov.il/he/pages/uniform_format_traffic_counts.
+
+## How the kit reads the נוהל — unanswered vs unknown (0.7.1, owner rule 26/08/2026)
+
+The נוהל says a required key must carry a value; it does not say what to write when the value
+cannot be known — the contractor of a survey older than its own paperwork, a contact who left the
+ministry years ago. Until 0.7.1 the only honest thing to write was `TODO`, which reads as "somebody
+still has to answer this" and never stops reading that way.
+
+A required **text** key may now carry an explicit token instead:
+
+| written | read as |
+|---|---|
+| `לא ידוע` · `לא ידוע — לא תועד במקורות` · `unknown — not documented in the sources` | **an answer.** No `todo`; an `info` finding `value_unknown_documented` keeps it visible, and the report prints it under "ערכים שתועדו כלא ידועים" — never in the TODO list. |
+| an empty cell · `TODO` · `?` · `N/A` · `-` · `...` | **not an answer.** Still an error (`missing_required` / `todo` / `value_placeholder`). |
+
+Only the spelled-out tokens count, and only on a key the נוהל leaves as prose: a key with a shape
+(`Created`, `Contact Email`, a URL) or a closed vocabulary (`Survey completeness`) is not answered by
+"unknown", because the answer would neither parse nor be in the list. The tokens live in
+`references/spec.json → unknown_tokens`; a profile may add one, and may not take one away or promote
+a rejected placeholder.

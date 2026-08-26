@@ -2,6 +2,22 @@
   "checked": "26/08/2026",
   "profile_revisions": [
     {
+      "profile": "generic",
+      "kit_version": "0.7.1",
+      "date": "26/08/2026",
+      "source": "owner rule 2026-08-26, on-board viewer project (docs/KIT-PROPOSALS.md KP-28)",
+      "spec_version_unchanged": "1.3 (15/05/2024)",
+      "what": "The נוהל text is unchanged. spec.json gains `unknown_tokens`: a required TEXT key answered with an explicit documented-unknown token is answered (info value_unknown_documented, printed as such in the report), while an empty cell, TODO, and the listed placeholders (?, N/A, -, ...) remain errors. Keys with a shape (date/e-mail/URL) or a closed vocabulary are out of scope - 'unknown' is not an answer to those. A profile may add a token, never remove one."
+    },
+    {
+      "profile": "onboard",
+      "kit_version": "0.7.1",
+      "date": "26/08/2026",
+      "source": "owner rule 2026-08-26, on-board viewer project (docs/KIT-PROPOSALS.md KP-27, KP-28, KP-30, KP-31)",
+      "spec_version_unchanged": "1.0 (13/11/2024)",
+      "what": "The FORMAT text is unchanged. (1) KP-27: the codes Table 11 defines for zone_id_orig/zone_id_dest (-1 abroad, -2 Palestinian localities, -3 IDF/IPS camps, -4 unknown) index nothing in zones.zip by design, so they are excluded from join_orphans and zone_code_unresolved - numerator and denominator - and reported as an info zone_special_codes with per-code row counts; the codes are read from the profile's own `Values`, never hard-coded. (2) KP-31: zones.zip carries key_role=lookup, so it is the parent of its join whichever side of the arrow the format writes it on; the orphans are the codes the layer does not index, not the zones nobody travelled to. (3) KP-28: a required text key (Contractor rows, Author, Contact) may carry an explicit unknown token - see the base dictionary's unknown_tokens; an empty cell, ?, TODO and N/A stay errors. (4) KP-30: a .dbf that declares no encoding is decoded with the .cpg, then UTF-8, then its own code page byte, then Windows-1255, reported as dbf_encoding_assumed - a layer read under a named assumption beats a layer with no documented fields at all."
+    },
+    {
       "profile": "onboard",
       "kit_version": "0.7.0",
       "date": "26/08/2026",

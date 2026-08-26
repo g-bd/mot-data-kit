@@ -19,8 +19,15 @@ python ../mot-metadata/scripts/mot_metadata.py build    <folder> --profile onboa
 
 `--deep zones` is the on-board one: it finds the zones layer's key (`zone_id`, `YISHUV_STA`,
 `YISHUV_STAT_2022`, `YISHUV_STAT11`, `STAT11`, `TAZ`), names the field that matched, and resolves
-`obod.zone_id_orig/dest` against it — the documented −1..−4 are allowed. It answers "does the layer
-this package ships index the codes this package uses", and nothing about whether a code is right.
+`obod.zone_id_orig/dest` against it. It answers "does the layer this package ships index the codes
+this package uses", and nothing about whether a code is right. The codes Table 11 defines for a trip
+end that is **not** a zone — −1 חוץ לארץ, −2 יישובים פלסטיניים, −3 מחנות צה"ל ושב"ס, −4 לא ידוע — index
+nothing on purpose: they are left out of `zone_code_unresolved` and of `join_orphans`, count and
+percentage alike, and reported as an `info` `zone_special_codes` with how many rows carry each. The
+kit reads them from `profile.json`, so a format that adds or renumbers one changes the dictionary
+only. And because `zones.zip` is the join's **lookup** side (`key_role: lookup`), the relation is
+judged in the direction it is used — the codes the layer does not index, never the zones nobody
+travelled to — whichever way round the format writes the key line.
 
 ## What the profile adds automatically
 
@@ -55,6 +62,17 @@ this package ships index the codes this package uses", and nothing about whether
   IS in the file is never called missing. A *synonym* is not matched: the kit does not decide that
   one contractor's `boarding` "is" `boardings`.
 - **A header-less CSV** is detected and reported; its first data row is never promoted to a field list.
+- **An unknown contractor is an answer.** `Contractor` (also `Author`, `Contact`) may carry
+  `לא ידוע` / `לא ידוע — לא תועד במקורות` / `unknown — not documented in the sources`. A survey
+  older than its own paperwork is answered, not unfinished: no `todo`, an `info`
+  `value_unknown_documented` keeps it visible, the row is not split into a name and a role, and the
+  report prints it under ערכים שתועדו כלא ידועים rather than in the TODO list. An empty cell,
+  `TODO`, `?` and `N/A` are still errors — only the spelled-out tokens count.
+- **A zones layer that declares no encoding is still read.** A `.dbf` written in Windows-1255 with no
+  `.cpg` and a code-page byte that says only "ANSI" used to leave the layer with zero documented
+  fields, which no answer in `metadata-config.json` could reach. The kit tries the `.cpg`, then
+  UTF-8, then the DBF's own code page, then Windows-1255, and reports which it used
+  (`dbf_encoding_assumed`). Shipping a `.cpg` is still the real fix.
 - **CBS statistical-areas field descriptions ship with the profile** (`references/cbs-fields.json`,
   the CBS's own wording) so a package that carries the standard layer can reach 0 errors.
 - **`Survey completeness` is proposed, never written** — `חלקי` when `obod.csv` is absent, `מלא`
@@ -68,7 +86,8 @@ this package ships index the codes this package uses", and nothing about whether
 
 ## Intake questions specific to OB (ask, then write to metadata-config.json)
 
-1. Contractor(s) that executed the survey.
+1. Contractor(s) that executed the survey — or, if no source records them,
+   `לא ידוע — לא תועד במקורות`. Never guess a company name.
 2. Daily periods used for expansion (e.g. 06:00-09:00, 09:00-15:00 ...).
 3. Survey days represented (ימי חול א'-ה' / ו' / ש').
 4. Vehicle types sampled (רגיל / מפרקי / מיניבוס).
