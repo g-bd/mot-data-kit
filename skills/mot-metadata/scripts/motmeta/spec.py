@@ -108,6 +108,29 @@ class Spec:
         return self.profile.get("dataset_kind")
 
     @property
+    def unknown_tokens(self) -> dict:
+        """Tokens that answer a required text key with "this is not known" (KP-28).
+
+        `values` are accepted as an answer and reported as an `info` so they stay visible;
+        `rejected` are the vague placeholders that are NOT an answer and remain errors. A
+        profile may add tokens of its own; it cannot take one away, and it cannot turn a
+        rejected placeholder into an answer - the base dictionary decides what does not count.
+        """
+        base = self.base.get("unknown_tokens") or {}
+        prof = self.profile.get("unknown_tokens") or {}
+        merged: dict[str, Any] = {"note": prof.get("note") or base.get("note", ""),
+                                  "source": prof.get("source") or base.get("source", "")}
+        for k in ("values", "rejected"):
+            seen, out = set(), []
+            for v in list(base.get(k) or []) + list(prof.get(k) or []):
+                key = str(v).strip().casefold()
+                if key and key not in seen:
+                    seen.add(key)
+                    out.append(str(v))
+            merged[k] = out
+        return merged
+
+    @property
     def expected_files(self) -> list[dict]:
         return self.profile.get("expected_files", [])
 

@@ -24,6 +24,8 @@ EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 URL_RE = re.compile(r"^https?://", re.I)
 KEY_RE = re.compile(r"^\s*(.+?)\.([^.>]+?)\s*->\s*(.+?)\.([^.]+?)\s*$")
 TODO_RE = re.compile(r"\bTODO\b", re.I)
+DASH_CHARS = "‐‑‒–—―−"
+_DASHES_RE = re.compile("[" + DASH_CHARS + "]")
 
 
 FORMAT_EXEMPT = "kit_format_exempt"      # the format does not ask for this - recorded, never blocking
@@ -54,6 +56,67 @@ def _empty(v: Any) -> bool:
 
 def _is_todo(v: Any) -> bool:
     return any(TODO_RE.search(x) for x in as_lines(v))
+
+
+def _norm_token(v: Any) -> str:
+    """One spelling for comparing a written value against a dictionary token."""
+    t = " ".join(to_text(v).split())
+    t = _DASHES_RE.sub("-", t)
+    t = re.sub(r"\s*-\s*", " - ", t).strip()
+    return t.casefold()
+
+
+def _is_free_text_key(item: dict) -> bool:
+    """A key the נוהל leaves as prose - no date/mail/URL shape, no closed value list.
+
+    A key with a shape or a vocabulary is not answered by "unknown": the answer would not
+    parse and would not be in the list, so the existing checks would have to lie about it.
+    """
+    return not (item.get("format") or item.get("allowed") or item.get("allowed_values") or item.get("expected"))
+
+
+def _unknown_verdict(v: Any, spec: Spec) -> str:
+    """'' | 'documented' | 'rejected' for a value (every non-empty line must agree)."""
+    lines = [x for x in as_lines(v) if to_text(x).strip()]
+    if not lines:
+        return ""
+    tok = spec.unknown_tokens
+    documented = {_norm_token(x) for x in tok.get("values", [])}
+    rejected = {_norm_token(x) for x in tok.get("rejected", [])}
+    normed = [_norm_token(x) for x in lines]
+    if any(x in rejected for x in normed):
+        return "rejected"
+    if normed and all(x in documented for x in normed):
+        return "documented"
+    return ""
+
+
+def _check_unknown(key: str, val: Any, item: dict, section: str, spec: Spec, fx: Findings) -> str:
+    """KP-28: a documented "unknown" is an answer; a vague placeholder is not. Returns the verdict.
+
+    The token stands in for a value nobody can supply - the contractor of a survey older than
+    its own paperwork - and writing it is a decision, so it is recorded and stays visible as an
+    `info` instead of being carried as an unfinished TODO for ever. What it is NOT is a way to
+    pass a key by typing something: only the tokens the dictionary spells out count, and the
+    placeholders it lists stay errors on a key that is required.
+    """
+    if not _is_free_text_key(item):
+        return ""
+    verdict = _unknown_verdict(val, spec)
+    required = str(item.get("status", "")).startswith("required")
+    if verdict == "rejected" and not required:
+        return ""
+    if verdict == "rejected":
+        fx.add("error", section, key, "value_placeholder",
+               f"{key} נכתב כ-'{to_text(as_lines(val)[0])}' – זו אינה תשובה",
+               to_text(spec.unknown_tokens.get("note", "")),
+               "השלם את הערך, או רשום במפורש '" + (spec.unknown_tokens.get("values") or [""])[0] + "'")
+    elif verdict == "documented":
+        fx.add("info", section, key, "value_unknown_documented",
+               f"{key} = '{to_text(as_lines(val)[0])}' – ערך לא ידוע שתועד ככזה, ולכן נחשב כתשובה",
+               to_text(spec.unknown_tokens.get("source", "")),
+               "אם הערך יתברר בעתיד – עדכן אותו ב-metadata-config.json")
+    return verdict
 
 
 def _norm_file(n: str) -> str:
@@ -90,6 +153,9 @@ def check_header(meta: dict, spec: Spec, include_survey: bool, fx: Findings, n_f
                     fx.add("warning", "header", key, "missing_author", "חסר Author", "חובה כאשר המחבר שונה מהמפרסם")
                 else:
                     fx.add("error", "header", key, "missing_required", f"חסר פרמטר חובה: {key} ({it.get('he','')})", it.get("desc", ""), f"הוסף את {key}")
+            continue
+        verdict = _check_unknown(key, val, it, "header", spec, fx)
+        if verdict:
             continue
         if _is_todo(val):
             fx.add("error", "header", key, "todo", f"{key} עדיין מסומן TODO", "", "השלם את הערך")
@@ -146,6 +212,10 @@ def check_block_roles(meta: dict, spec: Spec, fx: Findings) -> None:
         rows = [to_text(r) for r in as_lines(meta.get(it["key"])) if to_text(r)]
         if not rows or any(_is_todo(r) for r in rows):
             continue
+        if _unknown_verdict(rows, spec):
+            # "לא ידוע — לא תועד במקורות" is one answer, not a company and a role (KP-28);
+            # check_header has already said what it is.
+            continue
         read, unknown = [], []
         for r in rows:
             parts = _ROLE_SEP_RE.split(r, 1)
@@ -168,6 +238,8 @@ def check_survey(meta: dict, spec: Spec, fx: Findings) -> None:
         key = it["key"]
         if it["status"] == "required" and _empty(meta.get(key)):
             fx.add("error", "survey", key, "missing_survey", f"חסר פרמטר חובה לסקר סטטיסטי: {key} ({it.get('he','')})", it.get("desc", "טבלה 2 בנוהל – השלמה לכותרת עבור סקרים"))
+            continue
+        if _check_unknown(key, meta.get(key), it, "survey", spec, fx):
             continue
         if it["status"] == "required" and _is_todo(meta.get(key)):
             fx.add("error", "survey", key, "todo", f"{key} מסומן TODO")

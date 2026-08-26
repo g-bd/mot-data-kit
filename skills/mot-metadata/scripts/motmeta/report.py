@@ -65,6 +65,15 @@ def render_report(findings: list[dict], summary: dict, meta: Optional[dict] = No
     todo_html = ""
     if todo:
         todo_html = f"<section><h2>פריטים להשלמה ידנית (TODO)</h2><ol dir='ltr'>{''.join('<li>' + _e(x) + '</li>' for x in todo)}</ol></section>"
+    # KP-28: a value the publisher documented as unknown is an answer, and a different thing
+    # from a TODO - so it is printed as its own list and never inside the one above.
+    unknown = [f for f in findings if f.get("code") == "value_unknown_documented"]
+    unknown_html = ""
+    if unknown:
+        items = "".join("<li><b dir='ltr'>" + _e(f["where"]) + "</b> – " + _e(f["msg"]) + "</li>" for f in unknown)
+        unknown_html = ("<section><h2>ערכים שתועדו כלא ידועים</h2>"
+                        "<p class='sub'>אלו תשובות, לא פריטים שנותרו להשלמה – נרשמו במפורש ונשארים גלויים.</p>"
+                        f"<ul>{items}</ul></section>")
     verdict = "המטא-דאטה עומד בדרישות הנוהל (אין שגיאות)" if ok else f"נמצאו {counts.get('error',0)} שגיאות שיש לתקן לפני הפצה"
     n_exempt = (summary.get("buckets") or {}).get("kit_format_exempt", 0)
     exempt_kpi = f"<div class='kpi'><b>{n_exempt}</b>ממצאים שהפורמט אינו דורש</div>" if n_exempt else ""
@@ -104,6 +113,7 @@ def render_report(findings: list[dict], summary: dict, meta: Optional[dict] = No
 <p class='sub'>הדוח בודק מבנה, שלמות והתאמה בין המטא-דאטה לקבצים בלבד – הוא אינו בודק את נכונות הנתונים עצמם.</p>
 {''.join(sections) if sections else '<p>לא נמצאו ממצאים.</p>'}
 {todo_html}
+{unknown_html}
 {inv}
 <footer>mot-metadata-kit · {now}</footer>
 </main></body></html>"""
