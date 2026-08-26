@@ -1,5 +1,21 @@
 {
-  "checked": "23/08/2026",
+  "checked": "26/08/2026",
+  "profile_revisions": [
+    {
+      "profile": "onboard",
+      "kit_version": "0.7.0",
+      "date": "26/08/2026",
+      "source": "proposals from the on-board viewer project, 2026-08 (docs/KIT-PROPOSALS.md, KP-1..KP-26), raised while driving the kit over 18 real on-board deliveries",
+      "spec_version_unchanged": "1.0 (13/11/2024)",
+      "what": "The FORMAT text is unchanged. What changed is the profile's reading of it: delivery zips exempt from field documentation (Table 5), a counts-only package does not owe obod.csv/zones.zip (two conditions), expected documents (report/methodology at warning, questionnaire at info), zones-layer key candidates + --deep zones, CBS statistical-areas field descriptions shipped (references/cbs-fields.json), expected_keys may be alternatives (trip_index | trip_id), not_recorded as an accepted token, month_year m_yyyy/mm_yyyy/m_m_yyyy, Data encoding per file, Contractor roles, Zones type spelling normalised, orig/dest_lat_lon required* + distribution:false.",
+      "deferred_to_the_format_author": [
+        "Sample size passengers: rows in obod.csv or passengers counted in obad.csv (FP-18)",
+        "Response rate: which denominator (FP-19)",
+        "trips -> obad/obod key: 3.8 prints trip_id, 3.6 and Tables 10-11 name trip_index (FP-14) - the kit accepts both",
+        "a per-file synonym table for real-world column names (KP-1) - vocabulary, not typography"
+      ]
+    }
+  ],
   "sources": [
     {"id": "guideline", "name": "נוהל הכנה ותיעוד קבצי מידע לתכנון תחבורה", "version": "1.3", "date": "15/05/2024",
      "page": "https://www.gov.il/he/pages/data_distribution",

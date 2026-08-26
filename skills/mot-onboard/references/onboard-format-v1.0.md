@@ -83,6 +83,62 @@ Windows-1255), **File comments\***, File fields (block per נוהל Table 4).
   **zone_id** (rename of yishuv_stat_2022 — national unique statistical-area id), rova, tat_rova*, cod_tifkud,
   shape_length, shape_area. For traffic zones state which model/version in File description.
 
+## How the kit reads this format (0.7.0, proposals from the on-board viewer project, 2026-08)
+
+The format text above is unchanged — this section records where the **kit's reading** of it was
+corrected after driving it over eighteen real deliveries. Everything here follows the format; where
+the format is silent or contradicts itself, the kit records both readings and decides neither.
+
+- **Table 5, "GTFS → fields need not be documented"** is read as covering the whole delivery
+  container, not only a GTFS feed: `shapes.zip` and any licensing zip inside it are carried through
+  **unchanged**, so the metadata states the file name and the format and stops there. Their members
+  are not documented files, and an unanswered `Description` inside one is recorded in the
+  `kit_format_exempt` bucket, never as a blocking error. `profile.json → delivery_files`.
+- **A counts-only package** (`Survey completeness = חלקי` **and** no `obod.csv`) does not owe
+  `obod.csv` or `zones.zip`. Two conditions, not one: a package that declares `חלקי` and still ships
+  questionnaires has zone codes that resolve to something, and owes the layer that resolves them.
+  `profile.json → required_files.when`.
+- **The documents.** Table 5 lists the data files and says nothing about what a survey is delivered
+  WITH. The profile now expects a **summary report / methodology** document (warning when neither is
+  there), and records a separate methodology document and a questionnaire at `info`. Never an error:
+  the point is that the absence is stated, not that the package is refused. **The summary report IS
+  the methodology** — the sampling frame, the expansion method and the field procedure are chapters
+  of it — so either shape answers the one checked item, `.pdf` or `.docx`.
+- **`trip_index` vs `trip_id`.** §3.8's Key list prints `trips.csv.trip_id -> obad/obod.trip_id`;
+  §3.6 and Tables 10–11 name `trip_index` as the key from `trips.csv` to `obad.csv`/`obod.csv`.
+  The kit accepts **either** and demands neither in particular (`expected_keys` alternatives).
+- **The zones layer's key** is looked for under `zone_id`, `YISHUV_STA`, `YISHUV_STAT_2022`,
+  `YISHUV_STAT11`, `STAT11`, `TAZ`; the field that matched is named, and `--deep zones` then
+  resolves `obod.zone_id_orig/dest` against it, allowing the documented −1..−4. The format still
+  asks for the field to be renamed `zone_id`, and the kit still says so.
+- **The CBS statistical-areas field descriptions ship with the profile**
+  (`references/cbs-fields.json`, the CBS's own text from `readme_statistical_areas_2022.pdf`).
+  Nobody in this kit authored that layer, so nobody in this kit invents its field descriptions —
+  and a field the file does not know stays `TODO`.
+- **Field names** are matched after the typography is removed: zero-width characters, a stray `?`,
+  `last _bus_stop`, an NBSP, case. The canonical name is reported (`field_alias`). A **synonym** is
+  deliberately NOT matched — the kit does not decide that one contractor's `boarding` "is"
+  `boardings`.
+- **`month_year`** accepts `m_yyyy`, `mm_yyyy` and `m_m_yyyy` — §3.7's own examples (`1_2020`,
+  `2_4_2024`) are unpadded. `Sample frame` rows are checked against the same syntax, at warning, with
+  `timetable.csv.month_year` named as the source of truth.
+- **`not_recorded`** is an accepted category token beside `Null` (§3.5): the question was not asked
+  or the answer was not written down, which is not the same as "unknown", which is an answer.
+- **Open key columns** (`*(key)`, or any column in the declared Key list) get no closed `Values`
+  list and no `value_undocumented`: a statistical-area code is an open set of thousands. For those
+  the join is what can be checked.
+- **`orig_lat_lon` / `dest_lat_lon`** carry `required*` (not plain `required`) beside
+  `distribution: false`: required of the survey, forbidden in the distribution file. Their absence
+  there is the format being obeyed.
+- **`Data encoding`** is a per-file key of Table 4 and is recorded per file; a package that mixes
+  encodings is reported (`encoding_not_uniform`).
+- **`Contractor`** rows may read `<name> — <role>` (`ביצוע` / `ניהול ובקרה` / `המרה לפורמט האחוד`);
+  a bare name means `ביצוע`. Accepted, never demanded — the format has not said this yet.
+
+Still open with the format's author, **not** decided by the kit: the definition of
+`Sample size passengers` (rows in `obod` or passengers counted in `obad` — they differ by a factor of
+three) and of `Response rate` (two ratios in use, differing 2×).
+
 ## Appendix 1
 Full metadata of the TLV-metro on-board survey, pulse 1 (2019–2022): Publisher משרד התחבורה, Author נתיבי איילון,
 Contractor Sigma 6, Vehicle types מפרקי / מיניבוס, Temporal coverage ינואר 2020 – יוני 2022, Sample frame 2019_12,
