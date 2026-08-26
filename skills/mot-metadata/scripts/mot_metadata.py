@@ -252,7 +252,9 @@ def cmd_validate(a) -> int:
     deep = {x.strip() for x in (a.deep or "").split(",") if x.strip()}
     fx, summary = validate(meta, spec, folder if not a.no_folder else None, scan=scan, dataset_kind=kind, deep=deep)
     out_dir = Path(a.out_dir) if a.out_dir else folder
+    out_dir.mkdir(parents=True, exist_ok=True)      # as cmd_build already does
     rep = Path(a.report) if a.report else out_dir / "metadata-report.html"
+    rep.parent.mkdir(parents=True, exist_ok=True)
     rep.write_text(render_report(fx, summary, meta, scan, spec.describe()), encoding="utf-8")
     write_findings_json(fx, summary, Path(a.findings) if a.findings else out_dir / "findings.json")
     c = summary["counts"]
