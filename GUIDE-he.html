@@ -187,7 +187,9 @@
 
       <h3>ב. בדיקת מטא-דאטה קיים</h3>
       <p><em>"בדוק את ‎metadata.xlsx בתיקייה X מול הנוהל"</em> — ה-skill מאתר את הקובץ, משווה לנוהל, לפרופיל ולקבצים, ומסכם. קוד יציאה 1 כשיש שגיאות (נוח לאוטומציה).</p>
-      <div class="term"><div class="bar"><i></i><i></i><i></i></div><pre><span class="k">python</span> skills/mot-metadata/scripts/mot_metadata.py validate &lt;folder&gt; --metadata metadata.xlsx [--profile onboard] [--kind survey]</pre></div>
+      <div class="term"><div class="bar"><i></i><i></i><i></i></div><pre><span class="k">python</span> skills/mot-metadata/scripts/mot_metadata.py validate &lt;folder&gt; --metadata metadata.xlsx [--profile onboard] [--kind survey] [--out-dir D]</pre></div>
+      <p><strong>בדיקות עומק</strong> (<code>--deep</code>, מרצון — הן קוראות את קבצי הנתונים עצמם): <code>values</code> — רשימת הערכים המתועדת מול הקודים שבעמודה; <code>temporal</code> — טווח הזמן שבמטא-דאטה מול התאריכים שבנתונים; <code>joins</code> — המפתחות המוצהרים (ערכים "יתומים"); <code>zones</code> — לסקרי און-בורד: מאתר את שדה המפתח של שכבת האזורים (<code>zone_id</code>, <code>YISHUV_STA</code>, <code>YISHUV_STAT_2022</code>, <code>STAT11</code>, <code>TAZ</code>), אומר איזה שדה נמצא, ופותר מולו את <code>zone_id_orig/dest</code> שבשאלונים (הקודים המתועדים ‎−1..−4 מותרים). <code>--deep all</code> מריץ את כולן. גם בעומק הערכה בודקת התאמה בלבד — לעולם לא נכונות של נתון.</p>
+      <div class="term"><div class="bar"><i></i><i></i><i></i></div><pre><span class="k">python</span> skills/mot-metadata/scripts/mot_metadata.py validate &lt;folder&gt; --profile onboard --deep all</pre></div>
 
       <h3>ג. אריזה להפצה</h3>
       <p><em>"ארוז את סט הנתונים להפצה"</em> — בונה את קובץ ה-ZIP בשם שב-<code>Dataset file</code> (קבצי הנתונים, המטא-דאטה והמסמכים הנלווים, כולל קבצי הלוואי של שכבות) וכותב <code>package-checklist.json</code>: האם הכל ברשימה נמצא, מה בתיקייה נשאר בחוץ.</p>
@@ -212,6 +214,7 @@
         <tr><td><span class="sev i">הערה</span></td><td>הצעה לשיפור</td><td>שדה עם מעט ערכים — אולי מקודד; מילות מפתח לא מנספח א'; מסמך שאינו ב-Related documents</td></tr>
       </table></div>
       <p>הדוח מחולק לפי חלקי הנוהל: כותרת (טבלה 1), בלוק הסקר (טבלה 2), הקבצים (טבלה 3), השדות (טבלה 4), רשימת המפתחות, התאמה לתיקייה, כללי שמות (5.7) והפורמט הייעודי. הטקסט בעברית, הטבלאות משמאל לימין.</p>
+      <p><strong>"הפורמט אינו דורש"</strong> — ממצא שמסומן כך (ובקובץ <code>findings.json</code>: <code>"bucket": "kit_format_exempt"</code>) הוא ממצא שהפורמט עצמו אינו דורש, ולכן הוא נרשם ונספר אך אינו חוסם הפצה: שדותיו של קובץ הפצה המועבר כפי שהוא (GTFS או רישוי — טבלה 5), <code>obod.csv</code> ו-<code>zones.zip</code> של סקר ספירות בלבד, ושדות מזהים שהפורמט אוסר לכלול בקובץ ההפצה. ההיעדר נאמר — אך אינו נזקף לחובת החבילה.</p>
     </section>
 
     <section id="not">

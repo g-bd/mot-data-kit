@@ -13,9 +13,14 @@ machine-readable expectations: `references/profile.json`.
 ```
 python ../mot-metadata/scripts/mot_metadata.py init     <folder> --profile onboard
 python ../mot-metadata/scripts/mot_metadata.py build    <folder> --profile onboard --name <survey>_<year>
-python ../mot-metadata/scripts/mot_metadata.py validate <folder> --profile onboard [--metadata F]
+python ../mot-metadata/scripts/mot_metadata.py validate <folder> --profile onboard [--metadata F] [--deep all]
 python ../mot-metadata/scripts/mot_metadata.py build    <folder> --profile onboard --from <old metadata.xlsx>
 ```
+
+`--deep zones` is the on-board one: it finds the zones layer's key (`zone_id`, `YISHUV_STA`,
+`YISHUV_STAT_2022`, `YISHUV_STAT11`, `STAT11`, `TAZ`), names the field that matched, and resolves
+`obod.zone_id_orig/dest` against it — the documented −1..−4 are allowed. It answers "does the layer
+this package ships index the codes this package uses", and nothing about whether a code is right.
 
 ## What the profile adds automatically
 
@@ -33,7 +38,27 @@ python ../mot-metadata/scripts/mot_metadata.py build    <folder> --profile onboa
   `zones*.zip` / `statistical_areas*.shp` (GIS → CRS/bbox/geometry + `Zones type`), survey report
   `.pdf` (→ Related documents), `*metadata*.xlsx`.
 - **Expected key list**: routes→timetable (route_id), timetable→trips (route_id, trip_id),
-  trips→obad / obod (trip_id), obod zone_id_orig/dest → zones.zone_id.
+  trips→obad / obod (**`trip_index` or `trip_id` — either satisfies it**; §3.8 prints one, §3.6 and
+  Tables 10–11 name the other, and the kit does not pick a winner), obod zone_id_orig/dest →
+  zones.zone_id.
+- **What the format does NOT ask for, and so neither do we** — recorded in the `kit_format_exempt`
+  bucket, never blocking: the fields of a **delivery zip** (`shapes.zip`, a GTFS/licensing container
+  carried through unchanged — Table 5); `obod.csv` and `zones.zip` of a **counts-only** package
+  (`Survey completeness = חלקי` **and** no `obod.csv` — both conditions, or one metadata cell would
+  excuse two files); and the identifying fields the format **forbids** in a distribution file
+  (`orig_address`, `orig_lat_lon`, `dest_address`, `dest_lat_lon`).
+- **The documents**: a summary report / methodology document is a checked item (warning when
+  **neither** is there — the summary report IS the methodology, and it may be `.pdf` or `.docx`); a
+  separate methodology document and a questionnaire are recorded at `info`. Never an error.
+- **Field names are matched after the typography is removed** (zero-width characters, a stray `?`,
+  `last _bus_stop`, NBSP, case) and the canonical name is reported (`field_alias`) — so a field that
+  IS in the file is never called missing. A *synonym* is not matched: the kit does not decide that
+  one contractor's `boarding` "is" `boardings`.
+- **A header-less CSV** is detected and reported; its first data row is never promoted to a field list.
+- **CBS statistical-areas field descriptions ship with the profile** (`references/cbs-fields.json`,
+  the CBS's own wording) so a package that carries the standard layer can reach 0 errors.
+- **`Survey completeness` is proposed, never written** — `חלקי` when `obod.csv` is absent, `מלא`
+  when every Table-5 file is there. The author confirms it.
 - **Naming**: field names must be lowercase `snake_case` English (format §3.4); `trip_id` =
   `line_id_direction_alternative_departure_time[_day_type]_month_year`; `trip_index` is the unique
   per-trip key linking trips/obad/obod.

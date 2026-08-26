@@ -25,7 +25,7 @@ first run if missing; `setup` also installs the optional `pyshp` / `pyproj` and 
 | `scan <folder>` | Inventory: files, sizes, dates, CSV/XLSX headers + inferred types + low-cardinality values, shapefile fields/CRS/bbox/geometry, ZIP members (GTFS detected), documents. Writes `scan.json`. |
 | `init <folder> [--profile onboard\|sensors]` | Writes `metadata-config.json` — the intake template with every file/field pre-listed and a `_questions` list. |
 | `build <folder> [--profile P] [--from old-metadata.xlsx] [--name NAME] [--formats json,xlsx,pdf,csv] [--force]` | Scan + config (+ profile) → `<name>-metadata.json/.xlsx/.pdf` + `metadata-report.html` + `findings.json`. Unanswered required items are written as `TODO` and listed. `--from` seeds the config from an existing (flawed) metadata file so a corrected one is regenerated against the real files. |
-| `validate <folder\|metadata-file> [--metadata F] [--profile P] [--kind survey\|monitoring\|...]` | Checks an existing metadata .xlsx/.json against the dictionary, the profile and the folder. Exit code 1 when errors exist. Writes the report + findings. |
+| `validate <folder\|metadata-file> [--metadata F] [--profile P] [--kind survey\|monitoring\|...] [--deep values,temporal,joins,zones\|all] [--out-dir D]` | Checks an existing metadata .xlsx/.json against the dictionary, the profile and the folder. Exit code 1 when errors exist. Writes the report + findings; `--out-dir` is created if it does not exist. |
 | `render <metadata.json\|xlsx> --pdf out.pdf` | Re-render the metadata document as Hebrew PDF/HTML. |
 | `package <folder> [--metadata F] [--out zip]` | Build the הפצה ZIP named by `Dataset file` (Files list + metadata files + Related documents, shapefile sidecars included) and write `package-checklist.json` (zip name = Dataset file, everything listed is present, nothing listed is missing, what in the folder was left out). |
 | `scripts/spec_update.py <new spec pdf/docx> [--profile P]` | When MoT publishes a new version: extracts the document's key tables and writes a markdown diff against the bundled dictionary (new keys, keys no longer found, status/kind changes, new expected files/fields) with a JSON snippet to paste. Nothing is changed automatically — you approve, then edit `references/*.json` + `.md` + `spec-sources.json`. |
@@ -39,6 +39,18 @@ can write the description from context instead of asking. Still ask when the doc
 
 Severity in the report: **שגיאה** = the נוהל is violated (must fix before distribution), **אזהרה** =
 probably wrong/incomplete, **הערה** = suggestion. The report is Hebrew RTL; tables are LTR.
+
+**Deep checks** (`--deep`, opt-in, they read the data files): `values` (documented `Values` vs the
+codes present — open key columns are skipped, their join is what means something), `temporal`
+(`Temporal coverage` vs the real date range), `joins` (declared keys: orphans), `zones` (a profile
+that declares a zones layer: find the layer's key from the profile's candidate names, then resolve
+the questionnaire's zone codes against it). `all` runs the four.
+
+**Buckets in `findings.json`**: a finding may carry `"bucket": "kit_format_exempt"` — the FORMAT
+itself does not ask for this (a delivery zip's fields, a counts-only package's `obod.csv`/`zones.zip`,
+a field the format forbids in the distribution file). Counted in `summary.buckets`, shown in the
+report as "הפורמט אינו דורש", never blocking. `summary.todo` carries the build's TODO list, so a
+caller does not have to scrape stdout.
 
 ## Workflow A — create metadata for a folder
 
