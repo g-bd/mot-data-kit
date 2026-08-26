@@ -180,10 +180,13 @@ def main() -> int:
     if not a.cloudflare:
         print("   skipped (pass --cloudflare to publish the page to https://mot-metadata-kit.pages.dev/)")
     else:
+        # wrangler prints box-drawing characters; with no explicit encoding Python decodes them
+        # with the console codepage (cp1255 here), the reader thread dies, and the release run
+        # cannot tell you whether the deploy worked. It did - but say so next time.
         r = subprocess.run(["npx", "wrangler", "pages", "deploy", str(bundle), "--project-name", a.cf_project,
                             "--branch", "main", "--commit-dirty=true", "--commit-message", tag],
-                           capture_output=True, text=True, shell=True)
-        print("  ", (r.stdout or r.stderr).strip()[-400:])
+                           capture_output=True, text=True, encoding="utf-8", errors="replace", shell=True)
+        print("  ", ((r.stdout or "") + (r.stderr or "")).strip()[-400:])
         if r.returncode != 0:
             print("   Cloudflare deploy failed — the GitHub release above is unaffected")
 
