@@ -129,6 +129,39 @@ def check_header(meta: dict, spec: Spec, include_survey: bool, fx: Findings, n_f
         fx.add("info", "header", "Metadata version", "metadata_version", "לא צוינה גרסת מטא-דאטה (Metadata version) – לפי הנוהל יש לכתוב 1.1")
 
 
+_ROLE_SEP_RE = re.compile(r"\s+[—–-]\s+")
+
+
+def check_block_roles(meta: dict, spec: Spec, fx: Findings) -> None:
+    """A block whose rows may carry a role (`Contractor`): read it, never demand it (KP-13).
+
+    A survey executed by one company and converted to the unified format by another has
+    two contractors, and recording the converter only as `Metadata creator` is a different
+    claim. A bare name still means the default role, so nothing existing becomes wrong.
+    """
+    for it in spec.header:
+        roles = it.get("row_roles")
+        if not roles:
+            continue
+        rows = [to_text(r) for r in as_lines(meta.get(it["key"])) if to_text(r)]
+        if not rows or any(_is_todo(r) for r in rows):
+            continue
+        read, unknown = [], []
+        for r in rows:
+            parts = _ROLE_SEP_RE.split(r, 1)
+            name, role = (parts[0].strip(), parts[1].strip()) if len(parts) == 2 else (r.strip(), it.get("row_default_role", ""))
+            read.append(f"{name} — {role}" if role else name)
+            if len(parts) == 2 and role not in roles:
+                unknown.append(role)
+        for role in sorted(set(unknown)):
+            fx.add("info", "header", it["key"], "role_unknown",
+                   f"{it['key']}: התפקיד '{role}' אינו מהערכים המוכרים", ", ".join(roles),
+                   "אפשר להשאיר – הפורמט טרם הגדיר אוצר מילים לתפקידים")
+        fx.add("info", "header", it["key"], "roles_read",
+               f"{it['key']} נקרא כ-{len(rows)} שורות: " + "; ".join(read[:6]) + (" ..." if len(read) > 6 else ""),
+               it.get("row_note", ""))
+
+
 # --------------------------------------------------------------------------- survey block
 def check_survey(meta: dict, spec: Spec, fx: Findings) -> None:
     for it in spec.survey:
@@ -817,6 +850,7 @@ def validate(meta: dict, spec: Spec, folder: Optional[Path] = None, scan: Option
     include_survey = kind == "survey" or bool(spec.profile.get("survey_block"))
     n_files = max(len(meta.get("Files", [])), len(as_lines(meta.get("Files list"))))
     check_header(meta, spec, include_survey, fx, n_files)
+    check_block_roles(meta, spec, fx)
     if include_survey:
         check_survey(meta, spec, fx)
     elif kind in (None, "", "unknown"):
