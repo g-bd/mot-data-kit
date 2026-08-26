@@ -43,6 +43,50 @@ _DATETIME_RES = [
 ]
 NA_TOKENS = {"", "na", "n/a", "nan", "null", "none", "-", "--"}
 
+INVISIBLE_RE = re.compile("[​-‏‪-‮⁠﻿]")
+MIN_COLS_FOR_HEADER_TEST = 3      # below this a "header" is too small to judge
+#: A nested zip larger than this is LISTED, not opened (KP-23: one 838 MB shapes.zip
+#: was 80 % of a full-tree run). Override with MOTMETA_ZIP_MAX_MB.
+NESTED_ZIP_MAX_MB = int(os.environ.get("MOTMETA_ZIP_MAX_MB", "100"))
+MAX_TYPE_EXAMPLES = 5
+
+
+def strip_invisible(text: str) -> str:
+    return INVISIBLE_RE.sub("", str(text)).strip()
+
+
+def looks_like_column_name(cell: str) -> bool:
+    """Could this cell be a column NAME?
+
+    Asked the safe way round: a real header is anything that is not obviously a VALUE.
+    Column names in this domain are messy - `מזרוע 1 לזרוע 2-סוג רכב 1`, `SHAPE_Leng`,
+    `total boarding` - so the test rejects only what a name never is: a number, a date,
+    a time, a coordinate, or a paragraph.
+    """
+    c = strip_invisible(cell)
+    if not c or len(c) > 64:
+        return False
+    if _INT_RE.match(c) or _REAL_RE.match(c) or c[0].isdigit():
+        return False
+    for rx, _hint in (*_DATETIME_RES, *_DATE_RES, *_TIME_RES):
+        if rx.match(c):
+            return False
+    return True
+
+
+def header_is_data(header: Iterable[str]) -> bool:
+    """Does this "header" look like the file's first DATA row? (KP-24)
+
+    True when fewer than half its cells could be a column name. A file that has no
+    header row must never have one of its data rows promoted to a field list - the
+    fields it would invent are unanswerable by anybody.
+    """
+    cells = [c for c in (header or []) if strip_invisible(c)]
+    if len(cells) < MIN_COLS_FOR_HEADER_TEST:
+        return False
+    named = sum(1 for c in cells if looks_like_column_name(c))
+    return named * 2 < len(cells)
+
 
 # --------------------------------------------------------------------------- helpers
 def mb(n_bytes: int) -> float:
@@ -153,7 +197,13 @@ class TableProfiler:
                 "example": nonnull[0] if nonnull else None,
             }
             if mtype == "Text":
-                col["text_example"] = next((v for v in nonnull if not _REAL_RE.match(v)), None)
+                non_numeric = [v for v in nonnull if not _REAL_RE.match(v)]
+                col["text_example"] = non_numeric[0] if non_numeric else None
+                # KP-8: how many of the sampled values are NOT numeric, and up to five of them,
+                # so a column typed Integer that holds text is reported with evidence and a count.
+                if non_numeric:
+                    col["n_non_numeric_sampled"] = len(non_numeric)
+                    col["text_examples"] = non_numeric[:MAX_TYPE_EXAMPLES]
             if d is not None and 0 < len(d) <= DISTINCT_CAP:
                 col["distinct_values"] = sorted(d)
             if mtype in ("Date", "DateTime") and nonnull:
@@ -187,6 +237,14 @@ def scan_csv_bytes(raw: bytes, name: str) -> dict:
     header = [h.strip().lstrip("﻿") for h in header]
     if len(header) < 2 and name.lower().endswith((".txt", ".log")):
         return {"kind": "other", "format": "TXT", "encoding": enc, "fields": [], "n_rows": 0, "note": "plain text (not a table)"}
+    if header_is_data(header):
+        # no header row: describe the file, never invent field names from its data (KP-24)
+        n = 1
+        for _ in reader:
+            n += 1
+        return {"kind": "table", "format": "CSV", "encoding": enc, "delimiter": delim,
+                "n_rows": n, "n_cols": len(header), "fields": [], "headerless": True,
+                "first_row": [strip_invisible(h) for h in header[:8]]}
     tp = TableProfiler(header)
     for row in reader:
         tp.feed(row)
@@ -433,7 +491,13 @@ def scan_zip(path: Path, deep: bool = True, _depth: int = 0) -> dict:
                     info["inner"][n] = scan_csv_bytes(gzip.decompress(zf.read(n)), n)
                     info["inner"][n]["compressed"] = "gzip"
                     count += 1
-                elif ext == ".zip" and _depth < 1 and zf.getinfo(n).file_size < 300 * 1024 * 1024:
+                elif ext == ".zip" and _depth < 1 and zf.getinfo(n).file_size > NESTED_ZIP_MAX_MB * 1024 * 1024:
+                    # too big to open: list it and say so, do not walk it (KP-23)
+                    info.setdefault("nested_zips", []).append(
+                        {"name": n, "size_mb": mb(zf.getinfo(n).file_size), "listed_only": True,
+                         "reason": f"nested zip larger than {NESTED_ZIP_MAX_MB} MB - listed, not opened"})
+                    info["nested_zip_cap_mb"] = NESTED_ZIP_MAX_MB
+                elif ext == ".zip" and _depth < 1:
                     import tempfile as _tf
                     import os as _os
                     with _tf.NamedTemporaryFile(suffix=".zip", delete=False) as tf:

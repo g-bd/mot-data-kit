@@ -259,6 +259,14 @@ def check_files(meta: dict, spec: Spec, scan: Optional[dict], fx: Findings) -> N
 def check_fields(fl: dict, e: Optional[dict], spec: Spec, fx: Findings, where: str, is_gis: bool) -> None:
     fields = fl.get("File fields") or []
     fmt = to_text(fl.get("File format")).upper()
+    if e and e.get("headerless"):
+        # KP-24: the file has no header row. Say so; never invent a field list from a data row,
+        # and never compare a documented field list against one.
+        fx.add("warning", "fields", where, "headerless_csv",
+               f"לקובץ '{where}' אין שורת כותרות – השורה הראשונה היא נתונים",
+               "דוגמה מהשורה הראשונה: " + ", ".join(str(x) for x in (e.get("first_row") or [])[:5]),
+               "הוסף שורת כותרות לקובץ, או תאר את העמודות ידנית ב-File fields לפי סדרן")
+        return
     if not fields:
         if "GTFS" in fmt or (e and e.get("gtfs")):
             return
@@ -355,7 +363,13 @@ def check_fields(fl: dict, e: Optional[dict], spec: Spec, fx: Findings, where: s
             t = to_text(f.get("Type")).lower().replace("(key)", "")
             inf = (c.get("inferred_type") or "").lower()
             if t in ("integer", "real", "number") and inf == "text":
-                fx.add("warning", "fields", f"{where}.{f.get('Name')}", "type_implausible", f"'{f.get('Name')}' מוגדר {f.get('Type')} אך בקובץ יש ערכים לא מספריים (דוגמה: {c.get('text_example') or c.get('example')})")
+                n_bad = c.get("n_non_numeric_sampled")
+                samples = c.get("text_examples") or [x for x in (c.get("text_example") or c.get("example"),) if x]
+                fx.add("warning", "fields", f"{where}.{f.get('Name')}", "type_implausible",
+                       f"'{f.get('Name')}' מוגדר {f.get('Type')} אך בקובץ יש ערכים לא מספריים"
+                       + (f" ({n_bad} מתוך {c.get('n_sampled')} במדגם)" if n_bad else ""),
+                       "דוגמאות: " + ", ".join(str(s) for s in samples[:5]) if samples else "",
+                       "עדכן את ה-Type או תקן את הערכים – הערכים נקראו כטקסט ולא הומרו")
             elif t in ("date", "time", "datetime") and inf in ("integer", "real"):
                 fx.add("warning", "fields", f"{where}.{f.get('Name')}", "type_implausible", f"'{f.get('Name')}' מוגדר {f.get('Type')} אך הערכים בקובץ מספריים (דוגמה: {c.get('example')})")
             elif t == "text" and inf in ("integer", "real") and c.get("candidate_values") and not f.get("Values"):
