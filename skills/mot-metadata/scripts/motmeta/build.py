@@ -184,7 +184,10 @@ def build_metadata(folder: str | Path, spec: Spec, config: Optional[dict] = None
         if e["role"] != "data":
             continue
         logical.append((e["name"], e, None))
-        if e.get("format") == "ZIP" and not e.get("gtfs"):
+        if e.get("format") == "ZIP" and not e.get("gtfs") and not spec.is_delivery_file(e["name"]):
+            # a DELIVERY zip (GTFS / licensing container) is carried through unchanged:
+            # format Table 5 asks for its name and format, not for a field dictionary of
+            # every member a third party wrote (KP-24).
             inner = e.get("inner") or {}
             shp_inner = [k for k in inner if k.lower().endswith(".shp")]
             if len(shp_inner) == 1 and len(inner) == 1:
@@ -288,6 +291,11 @@ def build_metadata(folder: str | Path, spec: Spec, config: Optional[dict] = None
         if e.get("gtfs"):
             cols = []
             fl["File comments"] = (fl.get("File comments", "") + "; " if fl.get("File comments") else "") + "פורמט GTFS סטנדרטי – אין צורך בתיעוד השדות"
+        elif not gis and spec.is_delivery_file(name):
+            cols = []
+            n_members = e.get("n_members") or len(e.get("members") or [])
+            fl["File comments"] = (fl.get("File comments", "") + "; " if fl.get("File comments") else "") \
+                + f"קובץ הפצה המועבר כפי שהוא ({n_members} קבצים בארכיון) – לפי טבלה 5 אין חובה לתעד את שדותיו"
         fields_cfg = {k.lower(): v for k, v in (fcfg.get("fields") or {}).items()}
         field_hints = (dh.get("fields") or {}) if not gis else ((gis.get("doc_hints") or {}).get("fields") or dh.get("fields") or {})
         fl["File fields"] = []

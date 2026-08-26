@@ -279,7 +279,8 @@
       "he": "תיאור גאוגרפי",
       "desc": "תיאור גאוגרפי של קווי הסקר (GTFS או רישוי); בסקר ארוך – קובץ לכל תקופת רישוי shapes_<month>_<year>.zip",
       "pattern": "^shapes(_[0-9_]+)?\\.zip$|^gtfs.*\\.zip$",
-      "gtfs_ok": true
+      "gtfs_ok": true,
+      "delivery": true
     },
     {
       "name": "timetable.csv",
@@ -935,6 +936,13 @@
       "metadata": true
     }
   ],
+  "delivery_files": {
+    "note": "טבלה 5: קובץ הפצה (GTFS או רישוי) מועבר כפי שהוא. יש להצהיר על שם הקובץ והפורמט בלבד – אין חובה לתעד את שדותיו או את שדות הקבצים שבתוכו.",
+    "patterns": [
+      "^shapes(_[0-9_]+)?\\.zip$",
+      "^gtfs.*\\.zip$"
+    ]
+  },
   "expected_keys": [
     "routes.csv.route_id -> timetable.csv.route_id",
     "timetable.csv.route_id -> trips.csv.route_id",

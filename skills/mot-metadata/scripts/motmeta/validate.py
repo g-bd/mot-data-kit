@@ -156,6 +156,12 @@ def _scan_index(scan: Optional[dict]) -> dict[str, dict]:
     return idx
 
 
+def _is_delivery(name: str, spec: Spec) -> bool:
+    """The file itself is a delivery container, or it is a member of one."""
+    n = _norm_file(name)
+    return bool(spec.is_delivery_file(n) or ("/" in n and spec.is_delivery_file(n.split("/")[0])))
+
+
 def check_files(meta: dict, spec: Spec, scan: Optional[dict], fx: Findings) -> None:
     files = meta.get("Files", [])
     listed = [to_text(x) for x in as_lines(meta.get("Files list"))]
@@ -206,8 +212,10 @@ def check_files(meta: dict, spec: Spec, scan: Optional[dict], fx: Findings) -> N
     for fl in files:
         name = to_text(fl.get("File name"))
         where = name or "(file)"
+        delivery_member = _is_delivery(name, spec)
         if _is_todo(fl.get("File description")):
-            fx.add("error", "files", where, "todo", "File description מסומן TODO")
+            fx.add("warning" if delivery_member else "error", "files", where, "todo", "File description מסומן TODO",
+                   "", "", FORMAT_EXEMPT if delivery_member else "")
         for it in spec.file:
             key, st = it["key"], it["status"]
             if key == "File fields":
@@ -252,13 +260,31 @@ def check_files(meta: dict, spec: Spec, scan: Optional[dict], fx: Findings) -> N
                 fx.add("warning", "files", where, "geom_mismatch", f"Geographic type = '{fl['Geographic type']}' אך השכבה היא {e['geometry_type']}")
             if e and e.get("dbf_hebrew_suspect"):
                 fx.add("warning", "files", where, "dbf_encoding", "ייתכן שקידוד העברית ב-.dbf אינו נקרא כראוי (חסר .cpg?)", "", "הוסף קובץ .cpg עם הקידוד (UTF-8 / 1255)")
-        check_fields(fl, e, spec, fx, where, is_gis=bool(is_gis))
+        # format Table 5: a DELIVERY container (GTFS / licensing zip) is carried through
+        # unchanged, so its fields - and the fields of its members - are documented at the
+        # level the format asks for: the name and the format. An unanswered Description
+        # there is recorded and counted, never blocking (KP-21, KP-24).
+        # Only a PROFILE can declare a delivery file; with no profile the נוהל's Table 4
+        # is judged exactly as before.
+        delivery = _is_delivery(name, spec)
+        check_fields(fl, e, spec, fx, where, is_gis=bool(is_gis), delivery=delivery, in_zip=delivery)
 
 
 # --------------------------------------------------------------------------- fields
-def check_fields(fl: dict, e: Optional[dict], spec: Spec, fx: Findings, where: str, is_gis: bool) -> None:
+def check_fields(fl: dict, e: Optional[dict], spec: Spec, fx: Findings, where: str, is_gis: bool,
+                 delivery: bool = False, in_zip: bool = False) -> None:
     fields = fl.get("File fields") or []
     fmt = to_text(fl.get("File format")).upper()
+    # An unanswered field Description that the FORMAT does not ask for: recorded and counted
+    # in its own bucket, never an error. Table 5 exempts a delivery file's fields.
+    desc_sev = "warning" if (delivery or in_zip) else "error"
+    desc_bucket = FORMAT_EXEMPT if (delivery or in_zip) else ""
+    if delivery and not fields:
+        n = (e or {}).get("n_members") or len((e or {}).get("members") or [])
+        fx.add("info", "fields", where, "delivery_file_fields_exempt",
+               f"'{where}' הוא קובץ הפצה המועבר כפי שהוא" + (f" ({n} קבצים בארכיון)" if n else ""),
+               (spec.profile.get("delivery_files") or {}).get("note", ""), "", FORMAT_EXEMPT)
+        return
     if e and e.get("headerless"):
         # KP-24: the file has no header row. Say so; never invent a field list from a data row,
         # and never compare a documented field list against one.
@@ -281,7 +307,7 @@ def check_fields(fl: dict, e: Optional[dict], spec: Spec, fx: Findings, where: s
     hebrew_names: list[str] = []
     dups = [n for n, c in Counter(n.lower() for n in names).items() if c > 1]
     for d in dups:
-        fx.add("error", "fields", f"{where}.{d}", "duplicate_field", f"השדה '{d}' מופיע פעמיים")
+        fx.add(desc_sev, "fields", f"{where}.{d}", "duplicate_field", f"השדה '{d}' מופיע פעמיים", "", "", desc_bucket)
     for f in fields:
         n = to_text(f.get("Name"))
         w = f"{where}.{n}"
@@ -294,9 +320,9 @@ def check_fields(fl: dict, e: Optional[dict], spec: Spec, fx: Findings, where: s
         elif t.lower() not in allowed_types:
             fx.add("warning", "fields", w, "field_type_unknown", f"Type '{t}' אינו מהסוגים שבנוהל", ", ".join(spec.field_types))
         if _empty(f.get("Description")):
-            fx.add("error", "fields", w, "field_no_description", f"לשדה '{n}' אין Description")
+            fx.add(desc_sev, "fields", w, "field_no_description", f"לשדה '{n}' אין Description", "", "", desc_bucket)
         elif _is_todo(f.get("Description")):
-            fx.add("error", "fields", w, "todo", f"Description של '{n}' מסומן TODO")
+            fx.add(desc_sev, "fields", w, "todo", f"Description של '{n}' מסומן TODO", "", "", desc_bucket)
         if t.lower() in ("date", "time", "datetime") and _empty(f.get("Comments")):
             fx.add("info", "fields", w, "time_format_missing", f"'{n}' הוא {t} – רצוי לציין את פורמט הזמן/תאריך ב-Comments (hh:mm:ss / dd/mm/yyyy)")
         vals = f.get("Values") or []
@@ -379,7 +405,7 @@ def check_fields(fl: dict, e: Optional[dict], spec: Spec, fx: Findings, where: s
             if "(key)" in to_text(f.get("Type")).lower() and c.get("unique_in_sample") is False and c.get("n_sampled", 0) > 1:
                 fx.add("info", "fields", f"{where}.{f.get('Name')}", "key_not_unique", f"'{f.get('Name')}' מוגדר מפתח אך אינו חד-ערכי בקובץ זה (מפתח זר?)")
         if e.get("duplicate_headers"):
-            fx.add("error", "fields", where, "duplicate_headers_in_file", f"כותרות כפולות בקובץ: {', '.join(e['duplicate_headers'])}")
+            fx.add(desc_sev, "fields", where, "duplicate_headers_in_file", f"כותרות כפולות בקובץ: {', '.join(e['duplicate_headers'])}", "", "", desc_bucket)
         if e.get("encoding") == "cp1255" and not _empty(fl.get("Data encoding")) is False:
             fx.add("info", "files", where, "encoding_note", "הקובץ בקידוד Windows-1255 – רצוי לציין זאת (Data encoding / File comments) או להמיר ל-UTF-8")
 

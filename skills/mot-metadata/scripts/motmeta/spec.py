@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import json
+import re
 from pathlib import Path
 from typing import Any, Optional
 
@@ -110,8 +111,21 @@ class Spec:
         return self.profile.get("expected_files", [])
 
     @property
-    def expected_keys(self) -> list[str]:
+    def expected_keys(self) -> list:
+        """Declared joins. An entry may be a string, or a LIST of alternatives any one of
+        which satisfies the expectation (KP-20: the format prints `trip_id` in its Key list
+        and names `trip_index` as the key in its tables; the kit may not pick a winner)."""
         return self.profile.get("expected_keys", [])
+
+    @property
+    def delivery_patterns(self) -> list[str]:
+        """Files the format lets a package carry THROUGH unchanged (GTFS / licensing zips).
+        Their fields need not be documented - format Table 5."""
+        return list((self.profile.get("delivery_files") or {}).get("patterns", []))
+
+    def is_delivery_file(self, name: str) -> bool:
+        base = re.sub(r"[​-‏‪-‮﻿]", "", Path(name).name)
+        return any(re.search(p, base, re.I) for p in self.delivery_patterns)
 
     def describe(self) -> dict[str, Any]:
         d = {"guideline": self.base["spec"], "profile": self.profile_name}
