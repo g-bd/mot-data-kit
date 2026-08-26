@@ -1,8 +1,11 @@
 """Validate a metadata document against the נוהל dictionary, a profile, and the folder it describes.
 
 Only structure / completeness / consistency is checked - never the correctness of the data itself.
-Each finding: {severity, section, where, code, msg, detail, fix}
+Each finding: {severity, section, where, code, msg, detail, fix, bucket?}
   severity: error (the נוהל is violated) | warning (probably wrong / incomplete) | info (suggestion)
+  bucket:   optional label. `kit_format_exempt` = the FORMAT itself does not ask for this (a GTFS /
+            delivery zip's fields, Table 5; a counts-only package's obod/zones), so the finding is
+            recorded and counted but must never be read as "this package is incomplete".
 """
 from __future__ import annotations
 
@@ -22,13 +25,22 @@ KEY_RE = re.compile(r"^\s*(.+?)\.([^.>]+?)\s*->\s*(.+?)\.([^.]+?)\s*$")
 TODO_RE = re.compile(r"\bTODO\b", re.I)
 
 
+FORMAT_EXEMPT = "kit_format_exempt"      # the format does not ask for this - recorded, never blocking
+
+
 class Findings(list):
-    def add(self, severity: str, section: str, where: str, code: str, msg: str, detail: str = "", fix: str = ""):
-        self.append({"severity": severity, "section": section, "where": where, "code": code, "msg": msg, "detail": detail, "fix": fix})
+    def add(self, severity: str, section: str, where: str, code: str, msg: str, detail: str = "", fix: str = "", bucket: str = ""):
+        f = {"severity": severity, "section": section, "where": where, "code": code, "msg": msg, "detail": detail, "fix": fix}
+        if bucket:
+            f["bucket"] = bucket
+        self.append(f)
 
     def counts(self) -> dict:
         c = Counter(f["severity"] for f in self)
         return {"error": c.get("error", 0), "warning": c.get("warning", 0), "info": c.get("info", 0)}
+
+    def buckets(self) -> dict:
+        return dict(Counter(f["bucket"] for f in self if f.get("bucket")))
 
 
 def _empty(v: Any) -> bool:
@@ -621,7 +633,8 @@ def validate(meta: dict, spec: Spec, folder: Optional[Path] = None, scan: Option
     order = {"error": 0, "warning": 1, "info": 2}
     fx.sort(key=lambda f: (order[f["severity"]], f["section"], f["where"]))
     summary = {
-        "counts": fx.counts(), "n_files_described": len(meta.get("Files", [])), "n_fields_described": sum(len(f.get("File fields", [])) for f in meta.get("Files", [])),
+        "counts": fx.counts(), "buckets": fx.buckets(), "todo": list(meta.get("_meta", {}).get("todo") or []),
+        "n_files_described": len(meta.get("Files", [])), "n_fields_described": sum(len(f.get("File fields", [])) for f in meta.get("Files", [])),
         "dataset_kind": kind, "survey_block_checked": include_survey, "profile": spec.profile_name,
         "guideline_version": spec.base["spec"]["version"], "folder": str(folder) if folder else None,
         "metadata_source": meta.get("_meta", {}).get("source_file"),

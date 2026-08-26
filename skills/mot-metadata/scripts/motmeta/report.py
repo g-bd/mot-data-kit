@@ -36,7 +36,8 @@ def render_report(findings: list[dict], summary: dict, meta: Optional[dict] = No
             continue
         trs = []
         for f in rows:
-            trs.append(f"<tr class='{f['severity']}'><td class='sev'>{SEV_HE[f['severity']]}</td><td class='where'>{_ltr(f['where'])}</td>"
+            exempt = " <span class='bucket'>הפורמט אינו דורש</span>" if f.get("bucket") == "kit_format_exempt" else ""
+            trs.append(f"<tr class='{f['severity']}'><td class='sev'>{SEV_HE[f['severity']]}{exempt}</td><td class='where'>{_ltr(f['where'])}</td>"
                        f"<td class='msg'>{_e(f['msg'])}{('<div class=detail>' + _e(f['detail']) + '</div>') if f.get('detail') else ''}</td>"
                        f"<td class='fix'>{_e(f.get('fix',''))}</td><td class='code'>{_ltr(f['code'])}</td></tr>")
         c = {s: sum(1 for f in rows if f["severity"] == s) for s in ("error", "warning", "info")}
@@ -65,6 +66,8 @@ def render_report(findings: list[dict], summary: dict, meta: Optional[dict] = No
     if todo:
         todo_html = f"<section><h2>פריטים להשלמה ידנית (TODO)</h2><ol dir='ltr'>{''.join('<li>' + _e(x) + '</li>' for x in todo)}</ol></section>"
     verdict = "המטא-דאטה עומד בדרישות הנוהל (אין שגיאות)" if ok else f"נמצאו {counts.get('error',0)} שגיאות שיש לתקן לפני הפצה"
+    n_exempt = (summary.get("buckets") or {}).get("kit_format_exempt", 0)
+    exempt_kpi = f"<div class='kpi'><b>{n_exempt}</b>ממצאים שהפורמט אינו דורש</div>" if n_exempt else ""
     return f"""<!doctype html><html lang='he' dir='rtl'><head><meta charset='utf-8'><title>{_e(t)} – דוח מטא-דאטה</title>
 <style>
  body {{ font-family: Arial, 'Segoe UI', 'Noto Sans Hebrew', sans-serif; font-size: 13px; color:#1b1b1b; background:#fafafa; margin:0; }}
@@ -85,6 +88,7 @@ def render_report(findings: list[dict], summary: dict, meta: Optional[dict] = No
  tr.error td.sev {{ color:#b3261e; font-weight:700; }} tr.warning td.sev {{ color:#b26a00; font-weight:700; }} tr.info td.sev {{ color:#2b4c7e; }}
  td.where, td.code {{ direction:ltr; text-align:left; font-family: Consolas, monospace; font-size: 11.5px; white-space: pre-wrap; }}
  td.code {{ color:#888; }} .detail {{ color:#666; font-size: 11.5px; margin-top: 3px; }}
+ .bucket {{ display:inline-block; font-size:10.5px; font-weight:400; color:#4a4a4a; background:#efefef; border:1px solid #ddd; border-radius:8px; padding:0 5px; margin-inline-start:4px; }}
  .badges b {{ display:inline-block; min-width:22px; text-align:center; border-radius:10px; padding:1px 7px; margin-inline-start:4px; font-size:12px; color:#fff; }}
  .badges b.e {{ background:#b3261e; }} .badges b.w {{ background:#b26a00; }} .badges b.i {{ background:#2b4c7e; }}
  span[dir=ltr] {{ unicode-bidi: embed; }}
@@ -95,7 +99,7 @@ def render_report(findings: list[dict], summary: dict, meta: Optional[dict] = No
 <div class='verdict {'ok' if ok else 'bad'}'>{verdict}</div>
 <div class='kpis'><div class='kpi e'><b>{counts.get('error',0)}</b>שגיאות</div><div class='kpi w'><b>{counts.get('warning',0)}</b>אזהרות</div><div class='kpi i'><b>{counts.get('info',0)}</b>הערות</div>
 <div class='kpi'><b>{summary.get('n_files_described',0)}</b>קבצים מתוארים</div><div class='kpi'><b>{summary.get('n_fields_described',0)}</b>שדות מתוארים</div>
-<div class='kpi'><b>{_e(summary.get('dataset_kind') or '?')}</b>סוג סט הנתונים{' · בלוק סקר נבדק' if summary.get('survey_block_checked') else ''}</div></div>
+<div class='kpi'><b>{_e(summary.get('dataset_kind') or '?')}</b>סוג סט הנתונים{' · בלוק סקר נבדק' if summary.get('survey_block_checked') else ''}</div>{exempt_kpi}</div>
 <div class='sub'>מקור המטא-דאטה: {_ltr(summary.get('metadata_source') or '—')} · תיקייה: {_ltr(summary.get('folder') or '—')}</div>
 <p class='sub'>הדוח בודק מבנה, שלמות והתאמה בין המטא-דאטה לקבצים בלבד – הוא אינו בודק את נכונות הנתונים עצמם.</p>
 {''.join(sections) if sections else '<p>לא נמצאו ממצאים.</p>'}
