@@ -9,7 +9,7 @@ from typing import Any, Optional
 
 from .scan import scan_folder
 from .spec import Spec
-from .io import split_keywords
+from .io import split_keywords, to_text
 
 TODAY = _dt.date.today().strftime("%d/%m/%Y")
 TODO = "TODO"
@@ -320,15 +320,22 @@ def build_metadata(folder: str | Path, spec: Spec, config: Optional[dict] = None
     if not keys:
         # profile expected keys, instantiated with real file names
         names = [f["File name"] for f in files_out]
-        for k in spec.expected_keys:
-            m = re.match(r"^(.+?)\.([^.>]+?)\s*->\s*(.+?)\.([^.]+?)$", k.strip())
-            if not m:
-                continue
-            fa, ca, fb, cb = m.groups()
-            ra = next((n for n in names if _match_expected(n, spec) and _match_expected(n, spec)["name"] == fa), None)
-            rb = next((n for n in names if _match_expected(n, spec) and _match_expected(n, spec)["name"] == fb), None)
-            if ra and rb:
+        has_col = {f["File name"]: {to_text(x.get("Name")).strip().lower() for x in f["File fields"]} for f in files_out}
+        for entry in spec.expected_keys:
+            # a list entry = alternatives; take the first whose columns the package really has
+            for k in ([entry] if isinstance(entry, str) else list(entry)):
+                m = re.match(r"^(.+?)\.([^.>]+?)\s*->\s*(.+?)\.([^.]+?)$", k.strip())
+                if not m:
+                    continue
+                fa, ca, fb, cb = m.groups()
+                ra = next((n for n in names if _match_expected(n, spec) and _match_expected(n, spec)["name"] == fa), None)
+                rb = next((n for n in names if _match_expected(n, spec) and _match_expected(n, spec)["name"] == fb), None)
+                if not (ra and rb):
+                    continue
+                if ca.strip().lower() not in has_col.get(ra, set()) or cb.strip().lower() not in has_col.get(rb, set()):
+                    continue
                 keys.append(f"{ra}.{ca} -> {rb}.{cb}")
+                break
         if not keys:
             # heuristic: identical id-like field names shared by two files, unique in one of them
             by_name: dict[str, list[tuple[str, dict]]] = {}

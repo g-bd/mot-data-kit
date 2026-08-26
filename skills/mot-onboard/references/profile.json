@@ -945,6 +945,27 @@
       "metadata": true
     }
   ],
+  "required_files": {
+    "note": "FP-22: סקר שהצהיר על עצמו 'חלקי' ואינו כולל obod.csv הוא סקר ספירות בלבד. אין לו שאלונים, ולכן אין לו קודי אזור – ולכן אינו חייב את obod.csv ואת שכבת האזורים. שני התנאים נדרשים יחד: חבילה שמצהירה 'חלקי' ובכל זאת שולחת שאלונים – קודי האזור שבהם מפנים למשהו, והיא חייבת את השכבה שפותרת אותם.",
+    "when": [
+      {
+        "all_of": [
+          {
+            "key": "Survey completeness",
+            "equals": "חלקי"
+          },
+          {
+            "file_absent": "obod.csv"
+          }
+        ],
+        "not_required": [
+          "obod.csv",
+          "zones.zip"
+        ],
+        "he": "סקר ספירות בלבד (Survey completeness = חלקי, ללא obod.csv)"
+      }
+    ]
+  },
   "delivery_files": {
     "note": "טבלה 5: קובץ הפצה (GTFS או רישוי) מועבר כפי שהוא. יש להצהיר על שם הקובץ והפורמט בלבד – אין חובה לתעד את שדותיו או את שדות הקבצים שבתוכו.",
     "patterns": [
@@ -952,12 +973,19 @@
       "^gtfs.*\\.zip$"
     ]
   },
+  "expected_keys_note": "רשומה שהיא רשימה = חלופות, ודי באחת מהן. הפורמט מדפיס בסעיף 3.8 קישור על trip_id, ואילו טבלאות 10-11 וסעיף 3.6 מגדירים את trip_index כמפתח מ-trips.csv ל-obad/obod. הערכה מכירה בשתיהן ואינה מכריעה ביניהן (KP-20 / FP-14).",
   "expected_keys": [
     "routes.csv.route_id -> timetable.csv.route_id",
     "timetable.csv.route_id -> trips.csv.route_id",
     "timetable.csv.trip_id -> trips.csv.trip_id",
-    "trips.csv.trip_id -> obad.csv.trip_id",
-    "trips.csv.trip_id -> obod.csv.trip_id",
+    [
+      "trips.csv.trip_index -> obad.csv.trip_index",
+      "trips.csv.trip_id -> obad.csv.trip_id"
+    ],
+    [
+      "trips.csv.trip_index -> obod.csv.trip_index",
+      "trips.csv.trip_id -> obod.csv.trip_id"
+    ],
     "obod.csv.zone_id_orig -> zones.zip.zone_id",
     "obod.csv.zone_id_dest -> zones.zip.zone_id"
   ],

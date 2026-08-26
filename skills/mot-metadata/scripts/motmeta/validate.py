@@ -571,6 +571,37 @@ def check_keys(meta: dict, fx: Findings) -> None:
 
 
 # --------------------------------------------------------------------------- profile
+def _relaxed_required(meta: dict, spec: Spec, present: dict) -> tuple[set, str]:
+    """Expected files this package does NOT owe, per the profile's `required_files.when`.
+
+    A condition is read off the metadata the package wrote about itself and off which
+    expected files it actually carries - never off the data. Returns (names, why).
+    """
+    rules = (spec.profile.get("required_files") or {}).get("when") or []
+    relaxed: set = set()
+    why = ""
+    for rule in rules:
+        conds = rule.get("all_of") or ([rule] if ("key" in rule or "file_absent" in rule) else [])
+        if not conds:
+            continue
+        ok = True
+        for c in conds:
+            if "key" in c:
+                got = to_text(meta.get(c["key"]) if not isinstance(meta.get(c["key"]), list) else (meta.get(c["key"]) or [""])[0])
+                if got.strip() != to_text(c.get("equals")).strip():
+                    ok = False
+            elif "file_absent" in c and c["file_absent"] in present:
+                ok = False
+            elif "file_present" in c and c["file_present"] not in present:
+                ok = False
+            if not ok:
+                break
+        if ok:
+            relaxed |= set(rule.get("not_required") or [])
+            why = rule.get("he") or why
+    return relaxed, why
+
+
 def check_profile(meta: dict, spec: Spec, scan: Optional[dict], fx: Findings) -> None:
     if not spec.profile:
         return
@@ -581,6 +612,7 @@ def check_profile(meta: dict, spec: Spec, scan: Optional[dict], fx: Findings) ->
         ef = _match_expected(n, spec)
         if ef:
             present.setdefault(ef["name"], []).append(n)
+    relaxed, relax_why = _relaxed_required(meta, spec, present)
     for ef in spec.expected_files:
         if ef.get("metadata"):
             continue
@@ -589,6 +621,11 @@ def check_profile(meta: dict, spec: Spec, scan: Optional[dict], fx: Findings) ->
                 fx.add("warning", "profile", ef["name"], "report_missing", f"הפרופיל דורש {ef['he']} ({ef['name']}) ב-Related documents")
             continue
         if ef["name"] not in present:
+            if ef["name"] in relaxed:
+                fx.add("info", "profile", ef["name"], "expected_file_not_required",
+                       f"{ef['name']} ({ef['he']}) אינו נדרש בחבילה זו: {relax_why}",
+                       (spec.profile.get("required_files") or {}).get("note", ""), "", FORMAT_EXEMPT)
+                continue
             sev = "error" if ef["status"] == "required" else ("warning" if ef["status"] == "required*" else "info")
             fx.add(sev, "profile", ef["name"], "expected_file_missing", f"קובץ {'חובה' if sev == 'error' else 'צפוי'} בפורמט {spec.profile.get('spec', {}).get('name', spec.profile_name)}: {ef['name']} ({ef['he']}) לא נמצא", ef.get("desc", ""))
             continue
@@ -611,11 +648,22 @@ def check_profile(meta: dict, spec: Spec, scan: Optional[dict], fx: Findings) ->
                 fx.add("info", "profile", fname, "extra_fields", f"שדות נוספים מעבר לפורמט (מותר, ובלבד שמתועדים): {', '.join(extra[:10])}{' ...' if len(extra) > 10 else ''}")
     # expected keys
     have_keys = {re.sub(r"\s+", "", to_text(k).lower()) for k in as_lines(meta.get("Key list"))}
-    for k in spec.expected_keys:
-        if "<" in k:
+    norm = lambda x: re.sub(r"\s+", "", to_text(x).lower())
+    for entry in spec.expected_keys:
+        # an entry may be a LIST of alternatives - any one of them satisfies it (KP-20:
+        # the format prints trip_id in its Key list and names trip_index as the key in
+        # Tables 10-11; the kit records both and demands neither in particular)
+        alts = [entry] if isinstance(entry, str) else list(entry)
+        alts = [a for a in alts if "<" not in a]
+        if not alts:
             continue
-        if re.sub(r"\s+", "", k.lower()) not in have_keys:
-            fx.add("warning", "profile", k, "expected_key_missing", f"מפתח קישור צפוי לפי הפורמט חסר: {k}")
+        if any(norm(a) in have_keys for a in alts):
+            continue
+        if any(m and m.group(i) in relaxed for a in alts for m in (KEY_RE.match(a),) for i in (1, 3)):
+            continue     # the join names a file this package does not owe (KP-25)
+        fx.add("warning", "profile", alts[0], "expected_key_missing",
+               f"מפתח קישור צפוי לפי הפורמט חסר: {alts[0]}",
+               ("או לחלופין: " + " / ".join(alts[1:])) if len(alts) > 1 else "")
     # header extras required by profile already covered by check_header (merged dictionary)
     pass
 
