@@ -392,7 +392,10 @@ def cmd_check_spec(a) -> int:
         sources = json.load(f)
     _out("bundled spec snapshots:")
     for s in sources["sources"]:
-        _out(f"  {s['id']:10} v{s['version']:6} {s['date']:11} {s.get('page') or '(no page yet)'}")
+        _out(f"  {s['id']:10} v{s['version'] or '?':6} {s['date'] or '-':11} {s.get('page') or '(no page yet)'}")
+    for r in sources.get("profile_revisions", []):
+        _out(f"  profile '{r['profile']}' revised in kit {r['kit_version']} ({r['date']}) - spec text unchanged ({r['spec_version_unchanged']})")
+        _out(f"    source: {r['source']}")
     if not a.online:
         _out("run with --online to compare with gov.il (needs a browser session or working network; gov.il blocks plain HTTP clients)")
         return 0
