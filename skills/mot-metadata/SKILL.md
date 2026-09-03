@@ -31,6 +31,16 @@ first run if missing; `setup` also installs the optional `pyshp` / `pyproj` and 
 | `scripts/spec_update.py <new spec pdf/docx> [--profile P]` | When MoT publishes a new version: extracts the document's key tables and writes a markdown diff against the bundled dictionary (new keys, keys no longer found, status/kind changes, new expected files/fields) with a JSON snippet to paste. Nothing is changed automatically — you approve, then edit `references/*.json` + `.md` + `spec-sources.json`. |
 | `scripts/mot_fix.py` | Mechanical fixes driven by the audit — see the `mot-fix` skill. |
 
+**Embedding in a pipeline**: `scripts/mot_hook.py <folder> --json [--config F] [--formats json,xlsx,pdf]` never
+raises and prints one JSON result line (`ok | todo | skipped | error`, plus `todo` / `errors` / `warnings` counts and the
+paths written). Config resolution: `--config`, then `<folder>/metadata-config.json`, `$MOT_METADATA_CONFIG`, then a
+`metadata-config.json` up to three levels above the folder. A pipeline that makes its own dataset should keep ONE
+config template with `{placeholders}`, fill it from the run (period, versions, layer names, counts) and pass it with
+`--config` — no interview needed. Key `files` entries by basename so the same config documents the run folder and the
+shipped package layout. A layer whose `.prj` is missing or empty gets its SRS inferred from the coordinates
+(`crs_inferred` info); a layer the scanner could not read at all is reported as `layer_unread` first (usually `pyshp`
+missing in the host environment).
+
 **Doc harvest**: `scan`/`build` also read every README / .md / .txt / .html / .docx / .pdf in the folder. Lines shaped
 `field | description` (schema tables) become the field's Description automatically and are flagged in the report
 ("תיאור נלקח אוטומטית מהתיעוד – יש לאמת"); other mentions are attached as `_hints` in the `init` template so you

@@ -439,6 +439,19 @@ def scan_gpkg(path: Path) -> dict:
     return info
 
 
+def _crs_from_bbox(bbox) -> Optional[str]:
+    """SRS from the extent alone, for a layer with no usable .prj. Israel in degrees sits in
+    lon 33..37 / lat 29..34; in ITM metres in x 100k..300k / y 350k..850k. None when neither."""
+    if not bbox or len(bbox) < 4:
+        return None
+    x0, y0 = bbox[0], bbox[1]
+    if 33 <= x0 <= 37 and 29 <= y0 <= 34:
+        return "WGS_1984"
+    if 100_000 <= x0 <= 300_000 and 350_000 <= y0 <= 850_000:
+        return "EPSG:2039"
+    return None
+
+
 def _crs_from_prj(prj_text: str) -> dict:
     out = {"wkt": prj_text.strip()[:300]}
     try:
@@ -582,7 +595,14 @@ def scan_shapefile(shp_path: Path, zf: Optional[zipfile.ZipFile] = None, members
         info["n_rows"] = len(reader)
         bbox = list(reader.bbox) if reader.bbox else None
         info["bbox"] = [round(v, 6) for v in bbox] if bbox else None
-        info["crs"] = _crs_from_prj(prj_text) if prj_text else {"mot_value": None, "missing_prj": True}
+        # KP-32: a missing OR EMPTY .prj (an OSM extract shipped a zero-byte one) is not a reason to
+        # leave the SRS as TODO - the coordinates themselves say whether the layer is in degrees
+        # (WGS_1984) or in ITM metres (EPSG:2039). Say it was inferred, so the report can ask for a check.
+        if prj_text and prj_text.strip():
+            info["crs"] = _crs_from_prj(prj_text)
+        else:
+            guess = _crs_from_bbox(bbox)
+            info["crs"] = {"mot_value": guess, "missing_prj": True, "inferred_from_bbox": bool(guess)}
         fields = [f for f in reader.fields if f[0] != "DeletionFlag"]
         sample = []
         for i, rec in enumerate(reader.iterRecords()):

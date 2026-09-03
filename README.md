@@ -93,6 +93,15 @@ python skills/mot-metadata/scripts/mot_fix.py               <תיקייה> --met
 
 **מדריך מלא בעברית:** `GUIDE-he.html` (התקנה, שימוש יומיומי, קריאת הדוח, עדכון גרסאות הנוהל).
 
+### שילוב בצנרת (pipeline)
+
+`skills/mot-metadata/scripts/mot_hook.py <תיקייה> --json [--config F]` הוא הצעד שמערכות אחרות קוראות לו בסוף ייצוא:
+אף פעם לא זורק חריגה, תמיד מחזיר שורת JSON אחת (`ok | todo | skipped | error`) וכותב את המטא-דאטה והדוח לתוך התיקייה.
+הדפוס שעובד בלי AI בלולאה (google-agg-v2, חבילות חודשיות): תבנית `metadata-config.json` אחת עם `{placeholders}`
+שהצנרת ממלאת מתוך הריצה עצמה (תקופה, גרסת מפה, שמות שכבות, מספר מקטעים) ומעבירה ב-`--config`. מפתחות `files`
+לפי שם קובץ בלבד (ללא נתיב) תופסים גם כשאותם קבצים יושבים בתת-תיקייה בחבילה. **בסביבת הצנרת חייב להיות `pyshp`**,
+אחרת כל שכבה מדווחת `layer_unread`.
+
 ### מה נסרק
 
 CSV (UTF-8 / Windows-1255 / UTF-16 / gzip), Excel (xlsx וגם xls ישן), Shapefile, GeoJSON, GeoPackage,
@@ -158,6 +167,16 @@ metadata↔data consistency checks.
 
 **Full Hebrew guide:** `GUIDE-he.html`.
 
+### Embedding in a pipeline
+
+`skills/mot-metadata/scripts/mot_hook.py <folder> --json [--config F]` is the step other systems call at the end of
+an export: it never raises, always prints one JSON line (`ok | todo | skipped | error`) and writes the metadata +
+report into the folder. The pattern that runs with no AI in the loop (google-agg-v2 monthly packages): ONE
+`metadata-config.json` template with `{placeholders}` the pipeline fills from the run itself (period, map version,
+layer file names, link count) and passes with `--config`. `files` keys by basename (no path) match the same files
+when the package moves them into a sub-folder. **The host environment needs `pyshp`** or every layer reports
+`layer_unread`.
+
 ### What it reads
 
 CSV (UTF-8 / Windows-1255 / UTF-16 / gzip), Excel (xlsx and legacy xls), Shapefile, GeoJSON, GeoPackage,
@@ -167,7 +186,7 @@ descriptions automatically.
 ### Tests
 
 ```bash
-python -m pytest tests -q          # 18 unit tests on synthetic fixtures
+python -m pytest tests -q          # 88 unit tests on synthetic fixtures
 claude plugin eval .               # skill-behaviour evals (early access)
 ```
 

@@ -392,10 +392,19 @@ def check_files(meta: dict, spec: Spec, scan: Optional[dict], fx: Findings) -> N
             shp_inner = [v for k, v in e["inner"].items() if k.lower().endswith(".shp")]
             if len(shp_inner) == 1 and len(e["inner"]) == 1:
                 e, is_gis = shp_inner[0], True
+        if e and e.get("error"):
+            # KP-33: a layer the scanner could not read has no fields, no bbox and no SRS - every
+            # later finding on it is a symptom. Name the cause first (pyshp missing, unreadable file).
+            fx.add("error", "files", where, "layer_unread", f"השכבה לא נקראה: {e['error']}",
+                   "כל ממצא אחר על קובץ זה נובע מכך", "התקן pyshp (pip install pyshp) או בדוק שהקובץ תקין, והרץ שוב")
         if is_gis:
             for key in ("Spatial reference system", "Geographic bounding", "Geographic type"):
                 if _empty(fl.get(key)):
                     fx.add("error", "files", where, "missing_gis_key", f"שכבה גאוגרפית ללא {key} ({file_items[key]['he']})", "חובה לשכבות גאוגרפיות (טבלה 3)")
+            if e and (e.get("crs") or {}).get("inferred_from_bbox"):
+                fx.add("info", "files", where, "crs_inferred",
+                       f"אין קובץ .prj (או שהוא ריק); מערכת הקואורדינטות {e['crs']['mot_value']} הוסקה מהקואורדינטות עצמן",
+                       "", "ודא שהערך נכון, ורצוי לצרף .prj לשכבה")
             if e and (e.get("crs") or {}).get("mot_value") and not _empty(fl.get("Spatial reference system")):
                 want = e["crs"]["mot_value"]
                 got = to_text(fl["Spatial reference system"]).upper()
