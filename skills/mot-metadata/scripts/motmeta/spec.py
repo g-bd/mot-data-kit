@@ -131,6 +131,40 @@ class Spec:
         return merged
 
     @property
+    def spatial_wording(self) -> dict:
+        """The owner's rule on Spatial coverage wording (03/09/2026): the terms the kit never
+        writes and flags wherever it finds them, and what to write instead. A profile may
+        add a term; it cannot remove one."""
+        base = self.base.get("spatial_coverage_wording") or {}
+        prof = self.profile.get("spatial_coverage_wording") or {}
+        out = {"note": prof.get("note") or base.get("note", ""), "source": prof.get("source") or base.get("source", ""),
+               "use_instead": prof.get("use_instead") or base.get("use_instead", ""),
+               "forbidden": [], "examples": list(base.get("examples") or []) + list(prof.get("examples") or [])}
+        seen: set[str] = set()
+        for t in list(base.get("forbidden") or []) + list(prof.get("forbidden") or []):
+            k = str(t).strip().casefold()
+            if k and k not in seen:
+                seen.add(k)
+                out["forbidden"].append(str(t).strip())
+        return out
+
+    def forbidden_wording(self, value: Any) -> Optional[str]:
+        """The forbidden term a Spatial coverage value carries, or None.
+
+        Substring match, case-insensitive, invisible characters and repeated spaces ignored, on
+        every line of a block value - so 'השטחים הכבושים', 'occupied territories' and their
+        variants are all caught by the two stems the dictionary lists."""
+        terms = [t.casefold() for t in self.spatial_wording.get("forbidden", [])]
+        if not terms:
+            return None
+        for line in (value if isinstance(value, list) else [value]):
+            txt = re.sub(r"\s+", " ", re.sub("[\u200b-\u200f\u202a-\u202e\u2060\ufeff]", "", str(line or ""))).casefold()
+            for t in terms:
+                if t in txt:
+                    return t
+        return None
+
+    @property
     def expected_files(self) -> list[dict]:
         return self.profile.get("expected_files", [])
 

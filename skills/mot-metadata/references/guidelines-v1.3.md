@@ -49,7 +49,7 @@ value are simply omitted. Dates are `dd/mm/yyyy`. Some keys have enumerated valu
 | Version | גרסה | value | required* | mandatory for versioned datasets; if it replaces earlier versions say so in Comments |
 | Last updated | עדכון אחרון | value | required | dd/mm/yyyy |
 | Temporal coverage | טווח זמן | value | required | free text, e.g. 2000-2005 |
-| Spatial coverage | כיסוי מרחבי | value | required | ארצי / מטרופולין X / עירוני / שם יישוב |
+| Spatial coverage | כיסוי מרחבי | value | required | ארצי / מטרופולין X / עירוני / שם יישוב — official administrative names only; never "השטחים הכבושים" / "occupied territories" (kit rule, see below) |
 | Language | שפה | value | optional | |
 | Related documents | מסמכים נלווים | block | optional | pdf/text files shipped with the dataset |
 | References | הפניות | block | optional | URLs |
@@ -93,9 +93,9 @@ value are simply omitted. Dates are `dd/mm/yyyy`. Some keys have enumerated valu
 | File format | פורמט | required | extension; complex format → main file extension only |
 | File description | תיאור קובץ | required | not needed for a single-file dataset |
 | File fields | שדות | required (block) | Table 4 rows |
-| File size | גודל | optional | MB; complex format → all sidecar files |
+| File size | גודל | optional | MB; complex format → all sidecar files. The kit writes the fitting unit + exact bytes, e.g. `16.5 MB (17,268,557 bytes)` |
 | File date | תאריך יצירה | optional | dd/mm/yyyy |
-| Spatial coverage | כיסוי מרחבי | optional | if different from the dataset |
+| Spatial coverage | כיסוי מרחבי | optional | if different from the dataset; same wording rule as the header |
 | Spatial reference system | היטל | required* (GIS) | ITM / EPSG:2039 (רשת חדשה) / GRS_1980 (רשת ישנה) / WGS_1984 |
 | Geographic bounding | תיחום גאוגרפי | required* (GIS) | four bounding coordinates |
 | Geographic type | סוג ישות | required* (GIS) | Point / Polyline / Polygon |
@@ -161,3 +161,26 @@ Only the spelled-out tokens count, and only on a key the נוהל leaves as pros
 "unknown", because the answer would neither parse nor be in the list. The tokens live in
 `references/spec.json → unknown_tokens`; a profile may add one, and may not take one away or promote
 a rejected placeholder.
+
+## How the kit reads the נוהל — Spatial coverage wording, real sizes, Parquet (0.7.3, owner rule 03/09/2026)
+
+**Spatial coverage.** The נוהל asks for a verbal description — ארצי / שם מטרופולין / שם יישוב. The kit
+writes it that way, or by the official administrative name of the area (מחוז, אזור יהודה ושומרון),
+and **never as "the occupied territories"** (השטחים הכבושים, occupied territories, or any spelling of
+either), whoever asks for it. A `metadata-config.json` value carrying that wording is written as
+`TODO` and recorded in `_meta.refused_wording` (the report prints it under "נוסח שנדחה בכיסוי המרחבי");
+a metadata file that already carries it — at the dataset level or per file — gets the error
+`spatial_coverage_wording`. The terms are data (`spec.json → spatial_coverage_wording`, substring
+match, case- and invisible-character-insensitive); a profile may add one, never remove one.
+
+**Sizes.** `Size` and `File size` are "MB" in the נוהל's wording. The kit writes the unit that keeps the
+number readable **and** the exact byte count — `612 B (612 bytes)`, `6.3 KB (6,451 bytes)`,
+`16.5 MB (17,268,557 bytes)`, `2.04 GB (…)` — so a small lookup table is no longer `0.0` and the size
+is the real one. For a shapefile the total of the layer's sidecar files; for a member of a zip, its
+own uncompressed size.
+
+**Parquet.** A `.parquet` table is a data file like a CSV: its schema is the field list (types from the
+Arrow schema — Integer / Real / Date / DateTime / Time / Text), its footer the exact row count, and it
+is aligned with the metadata exactly as a CSV is — fields in file vs. in metadata, documented `Values`
+vs. the codes in the column, key joins — on disk and inside a zip. Read with `pyarrow` (installed by
+`setup`); without it the file is listed with its size and the cause named.

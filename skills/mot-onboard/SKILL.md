@@ -86,6 +86,9 @@ travelled to — whichever way round the format writes the key line.
 
 ## Intake questions specific to OB (ask, then write to metadata-config.json)
 
+> `Spatial coverage` follows the base rule (mot-metadata): מטרופולין X / שם יישוב / official
+> administrative names only — never "השטחים הכבושים" / "occupied territories", whoever asks.
+
 1. Contractor(s) that executed the survey — or, if no source records them,
    `לא ידוע — לא תועד במקורות`. Never guess a company name.
 2. Daily periods used for expansion (e.g. 06:00-09:00, 09:00-15:00 ...).

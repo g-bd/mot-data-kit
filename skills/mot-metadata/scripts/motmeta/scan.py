@@ -161,6 +161,28 @@ def mb(n_bytes: int) -> float:
     return round(n_bytes / (1024 * 1024), 3)
 
 
+def human_size(n_bytes: Optional[int]) -> str:
+    """The size in the unit that keeps it readable: '612 B', '12.3 KB', '16.5 MB', '2.04 GB'.
+
+    A 6 KB lookup table used to be written as `0.006` MB and a 300-byte one as `0.0`; the
+    reader now sees a real number, and `size_text` beside it carries the exact byte count.
+    """
+    n = float(n_bytes or 0)
+    for unit in ("B", "KB", "MB", "GB", "TB"):
+        if n < 1024 or unit == "TB":
+            if unit == "B":
+                return f"{int(n)} B"
+            s = f"{n:.{2 if unit in ('GB', 'TB') else 1}f}".rstrip("0").rstrip(".")
+            return f"{s} {unit}"
+        n /= 1024
+    return f"{int(n_bytes or 0)} B"     # pragma: no cover
+
+
+def size_text(n_bytes: Optional[int]) -> str:
+    """What the metadata's `Size` / `File size` carry: the readable unit AND the exact bytes."""
+    return f"{human_size(n_bytes)} ({int(n_bytes or 0):,} bytes)"
+
+
 def fmt_date(ts: float) -> str:
     return datetime.fromtimestamp(ts).strftime("%d/%m/%Y")
 
@@ -391,6 +413,90 @@ GPKG_GEOM = {"POINT": "Point", "MULTIPOINT": "Point", "LINESTRING": "Polyline", 
              "POLYGON": "Polygon", "MULTIPOLYGON": "Polygon"}
 
 
+PARQUET_BATCH = 65536
+#: Rows profiled from a Parquet table (the row count itself comes from the footer, exact).
+#: Override with MOTMETA_PARQUET_MAX_ROWS.
+PARQUET_MAX_ROWS = int(os.environ.get("MOTMETA_PARQUET_MAX_ROWS", "2000000"))
+#: A Parquet member of a zip larger than this is listed, not extracted and read.
+PARQUET_MAX_MB = int(os.environ.get("MOTMETA_PARQUET_MAX_MB", "500"))
+
+
+def _cell_text(v: Any) -> str:
+    """One Parquet cell as the string the profiler reads (dates in the kit's dd/mm/yyyy)."""
+    if v is None:
+        return ""
+    if isinstance(v, datetime):
+        return v.strftime("%d/%m/%Y %H:%M:%S")
+    if hasattr(v, "strftime"):
+        return v.strftime("%d/%m/%Y")
+    if isinstance(v, (bytes, bytearray)):
+        return v.decode("utf-8", "replace")
+    return str(v)
+
+
+def _arrow_type(t: Any) -> Optional[str]:
+    """MoT field type from an Arrow type; None where the sample decides (bool, nested, ...)."""
+    try:
+        import pyarrow.types as pt
+    except ImportError:     # pragma: no cover
+        return None
+    if pt.is_integer(t):
+        return "Integer"
+    if pt.is_floating(t) or pt.is_decimal(t):
+        return "Real"
+    if pt.is_timestamp(t):
+        return "DateTime"
+    if pt.is_date(t):
+        return "Date"
+    if pt.is_time(t):
+        return "Time"
+    if pt.is_string(t) or pt.is_large_string(t):
+        return "Text"
+    return None
+
+
+def scan_parquet(path: Path) -> dict:
+    """A Parquet table: the schema is the field list, the footer carries the exact row count.
+
+    Read with pyarrow (installed by `setup`); without it the file is listed with its size and
+    the reason its fields are unknown, so the report names the cause. Types come from the
+    Arrow schema, not from a string sample - a Parquet column already knows whether it is an
+    integer, a double, a date or a timestamp; the sample still supplies examples, distinct
+    values and null counts, exactly as for a CSV.
+    """
+    info: dict[str, Any] = {"kind": "table", "format": "Parquet", "fields": []}
+    try:
+        import pyarrow.parquet as pq
+    except ImportError:
+        info["error"] = "pyarrow not installed - run setup to read Parquet files"
+        return info
+    pf = pq.ParquetFile(path)
+    md, schema = pf.metadata, pf.schema_arrow
+    header = list(schema.names)
+    compression: set[str] = set()
+    if md.num_row_groups and md.num_columns:
+        rg = md.row_group(0)
+        compression = {str(rg.column(i).compression) for i in range(rg.num_columns)}
+    info.update({"n_rows": md.num_rows, "n_cols": len(header), "row_groups": md.num_row_groups,
+                 "parquet": {"created_by": md.created_by, "compression": sorted(compression)}})
+    tp = TableProfiler(header)
+    for batch in pf.iter_batches(batch_size=PARQUET_BATCH):
+        cols = [c.to_pylist() for c in batch.columns]
+        for row in zip(*cols):
+            tp.feed([_cell_text(v) for v in row])
+        if tp.n >= PARQUET_MAX_ROWS:
+            info["profiled_rows"] = tp.n
+            break
+    info["fields"] = tp.result()
+    for f, field in zip(info["fields"], schema):
+        f["parquet_type"] = str(field.type)
+        t = _arrow_type(field.type)
+        if t:
+            f["inferred_type"] = t
+    info["duplicate_headers"] = [h for h, c in Counter(header).items() if c > 1]
+    return info
+
+
 def scan_gpkg(path: Path) -> dict:
     """GeoPackage = SQLite: layers, geometry type, CRS, bbox and column profile via the stdlib."""
     import sqlite3
@@ -572,7 +678,8 @@ def scan_shapefile(shp_path: Path, zf: Optional[zipfile.ZipFile] = None, members
             stem = shp_path.with_suffix("")
             sidecars = [p for p in shp_path.parent.iterdir() if p.with_suffix("") == stem and p.suffix.lower() in SHP_SIDECARS]
             info["sidecars"] = [p.name for p in sidecars]
-            info["size_mb_all"] = mb(shp_path.stat().st_size + sum(p.stat().st_size for p in sidecars))
+            total = shp_path.stat().st_size + sum(p.stat().st_size for p in sidecars)
+            info["size_mb_all"], info["size_bytes_all"], info["size_all"] = mb(total), total, human_size(total)
             cpg = shp_path.with_suffix(".cpg")
             cpg_text = cpg.read_text(errors="ignore").strip() if cpg.exists() else None
             info["dbf_encoding_file"] = cpg_text
@@ -590,6 +697,8 @@ def scan_shapefile(shp_path: Path, zf: Optional[zipfile.ZipFile] = None, members
                                                cpg_text=cpg_text)
             info.update(enc_note)
             info["sidecars"] = [Path(m).name for m in members.values()]
+            total = sum(zf.getinfo(m).file_size for m in members.values())
+            info["size_mb_all"], info["size_bytes_all"], info["size_all"] = mb(total), total, human_size(total)
             prj_text = zf.read(members[".prj"]).decode("utf-8", "ignore") if ".prj" in members else None
         info["geometry_type"] = {1: "Point", 3: "Polyline", 5: "Polygon", 8: "Point", 11: "Point", 13: "Polyline", 15: "Polygon", 18: "Point", 21: "Point", 23: "Polyline", 25: "Polygon", 28: "Point", 31: "Polygon"}.get(reader.shapeType, str(reader.shapeTypeName))
         info["n_rows"] = len(reader)
@@ -629,7 +738,8 @@ def scan_zip(path: Path, deep: bool = True, _depth: int = 0) -> dict:
     try:
         with zipfile.ZipFile(path) as zf:
             names = [n for n in zf.namelist() if not n.endswith("/")]
-            info["members"] = [{"name": n, "size_mb": mb(zf.getinfo(n).file_size)} for n in names]
+            info["members"] = [{"name": n, "size_mb": mb(zf.getinfo(n).file_size), "size_bytes": zf.getinfo(n).file_size,
+                                "size": human_size(zf.getinfo(n).file_size)} for n in names]
             info["n_members"] = len(names)
             lower = {n.lower(): n for n in names}
             # GTFS detection
@@ -668,6 +778,15 @@ def scan_zip(path: Path, deep: bool = True, _depth: int = 0) -> dict:
                     info["inner"][n] = scan_csv_bytes(gzip.decompress(zf.read(n)), n)
                     info["inner"][n]["compressed"] = "gzip"
                     count += 1
+                elif ext == ".parquet" and zf.getinfo(n).file_size < PARQUET_MAX_MB * 1024 * 1024:
+                    import tempfile, os as _os
+                    with tempfile.NamedTemporaryFile(suffix=".parquet", delete=False) as tf:
+                        tf.write(zf.read(n)); tmpname = tf.name
+                    try:
+                        info["inner"][n] = scan_parquet(Path(tmpname))
+                    finally:
+                        _os.unlink(tmpname)
+                    count += 1
                 elif ext == ".zip" and _depth < 1 and zf.getinfo(n).file_size > NESTED_ZIP_MAX_MB * 1024 * 1024:
                     # too big to open: list it and say so, do not walk it (KP-23)
                     info.setdefault("nested_zips", []).append(
@@ -688,6 +807,12 @@ def scan_zip(path: Path, deep: bool = True, _depth: int = 0) -> dict:
                         info["inner"][f"{n}/{m}"] = mi     # flatten: "inner.zip/member"
                     info.setdefault("nested_zips", []).append({"name": n, "n_members": sub.get("n_members", 0), "gtfs": sub.get("gtfs", False)})
                     count += 1
+            for n, ie in info["inner"].items():
+                # the member's own size (uncompressed) - nested-zip members ("inner.zip/x.csv")
+                # are not members of THIS archive and keep no size
+                if n in zf.NameToInfo and "size_bytes" not in ie:
+                    sz = zf.getinfo(n).file_size
+                    ie["size_bytes"], ie["size_mb"], ie["size"] = sz, mb(sz), human_size(sz)
     except zipfile.BadZipFile:
         info["error"] = "not a valid zip"
     return info
@@ -741,7 +866,8 @@ def scan_folder(folder: str | Path, recursive: bool = True, deep_zip: bool = Tru
         if p.name.lower().endswith(".csv.gz"):
             ext = ".gz"
         st = p.stat()
-        entry: dict[str, Any] = {"name": rel, "ext": ext, "size_mb": mb(st.st_size), "modified": fmt_date(st.st_mtime)}
+        entry: dict[str, Any] = {"name": rel, "ext": ext, "size_mb": mb(st.st_size), "size_bytes": st.st_size,
+                                 "size": human_size(st.st_size), "modified": fmt_date(st.st_mtime)}
         # shapefile sidecars are folded into the .shp entry
         if ext in SHP_SIDECARS or p.name.lower().endswith(".shp.xml"):
             stem = p.with_suffix("").as_posix() if not p.name.lower().endswith(".shp.xml") else p.name[:-8]
@@ -773,6 +899,8 @@ def scan_folder(folder: str | Path, recursive: bool = True, deep_zip: bool = Tru
                     entry.update(scan_gpkg(p))
                 elif ext == ".xls":
                     entry.update(scan_xls(p))
+                elif ext == ".parquet":
+                    entry.update(scan_parquet(p))
         except Exception as e:  # keep scanning
             entry["error"] = f"{type(e).__name__}: {e}"
         if entry.get("kind") == "other" and entry.get("format") == "TXT":
@@ -788,6 +916,8 @@ def scan_folder(folder: str | Path, recursive: bool = True, deep_zip: bool = Tru
         "n_files": len(entries),
         "n_data_files": len(data_files),
         "total_size_mb": round(sum(e["size_mb"] for e in entries), 2),
+        "total_size_bytes": sum(e.get("size_bytes", 0) for e in entries),
+        "total_size": human_size(sum(e.get("size_bytes", 0) for e in entries)),
         "metadata_files": [e["name"] for e in entries if e["role"] == "metadata"],
         "documents": [e["name"] for e in entries if e["role"] == "document"],
         "files": entries,
@@ -826,6 +956,8 @@ def read_column_counts(folder: Path, rel: str, column: str, limit: int = 200000)
                 return None
             if member.lower().endswith(".gz"):
                 raw = gzip.decompress(raw)
+            if member.lower().endswith(".parquet"):
+                return _values_from_parquet_bytes(raw, column, limit)
             return _values_from_csv_bytes(raw, column, limit)
         p = folder / rel
         if not p.exists():
@@ -836,6 +968,8 @@ def read_column_counts(folder: Path, rel: str, column: str, limit: int = 200000)
         if ext == ".gz":
             with gzip.open(p, "rb") as f:
                 return _values_from_csv_bytes(f.read(), column, limit)
+        if ext == ".parquet":
+            return _values_from_parquet(p, column, limit)
         if ext == ".xlsx":
             import openpyxl
             wb = openpyxl.load_workbook(p, read_only=True, data_only=True)
@@ -882,10 +1016,44 @@ def read_column_counts(folder: Path, rel: str, column: str, limit: int = 200000)
                         vals = _values_from_csv_bytes(zf.read(n), column, limit)
                         if vals:
                             return vals
+                    elif n.lower().endswith(".parquet"):
+                        vals = _values_from_parquet_bytes(zf.read(n), column, limit)
+                        if vals:
+                            return vals
             return None
     except Exception:
         return None
     return None
+
+
+def _values_from_parquet(path: Path, column: str, limit: int) -> Optional[Counter]:
+    try:
+        import pyarrow.parquet as pq
+    except ImportError:
+        return None
+    pf = pq.ParquetFile(path)
+    if column not in pf.schema_arrow.names:
+        return None
+    out: Counter = Counter()
+    for batch in pf.iter_batches(columns=[column], batch_size=PARQUET_BATCH):
+        for v in batch.column(0).to_pylist():
+            if len(out) >= limit:
+                return out
+            s = _cell_text(v).strip()
+            if s != "":
+                out[s] += 1
+    return out
+
+
+def _values_from_parquet_bytes(raw: bytes, column: str, limit: int) -> Optional[Counter]:
+    import tempfile
+    with tempfile.NamedTemporaryFile(suffix=".parquet", delete=False) as tf:
+        tf.write(raw)
+        tmp = tf.name
+    try:
+        return _values_from_parquet(Path(tmp), column, limit)
+    finally:
+        os.unlink(tmp)
 
 
 def _zip_member_bytes(zip_bytes: bytes, member: str) -> Optional[bytes]:

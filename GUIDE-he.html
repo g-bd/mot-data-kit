@@ -135,8 +135,8 @@
     <section id="req">
       <h2><span class="num">02 / requirements</span>דרישות</h2>
       <ul>
-        <li>Python 3.10 ומעלה. אין מה להתקין ידנית: בהרצה הראשונה (או עם <code>setup</code>) הסקריפט מתקין לבד את מה שחסר — <code>openpyxl</code> (חובה), <code>pyshp</code>/<code>pyproj</code> (שכבות GIS), <code>xlrd</code> (קבצי ‎.xls ישנים).</li>
-        <li>נסרקים: CSV (כולל UTF-16 / Windows-1255 / gzip), Excel (xlsx + xls), Shapefile, GeoJSON, GeoPackage, ZIP — כולל zip בתוך zip — ו-GTFS.</li>
+        <li>Python 3.10 ומעלה. אין מה להתקין ידנית: בהרצה הראשונה (או עם <code>setup</code>) הסקריפט מתקין לבד את מה שחסר — <code>openpyxl</code> (חובה), <code>pyshp</code>/<code>pyproj</code> (שכבות GIS), <code>xlrd</code> (קבצי ‎.xls ישנים), <code>pyarrow</code> (קבצי Parquet).</li>
+        <li>נסרקים: CSV (כולל UTF-16 / Windows-1255 / gzip), Excel (xlsx + xls), Parquet, Shapefile, GeoJSON, GeoPackage, ZIP — כולל zip בתוך zip — ו-GTFS. גודל כל קובץ נרשם ביחידה המתאימה (KB / MB / GB) ולצידה מספר הבייטים המדויק.</li>
         <li>ל-PDF נדרש דפדפן כרומיום מותקן (Chrome / Edge). בלעדיו נשמר HTML במקום PDF.</li>
         <li>ללא סביבת הרצה (צ'אט בלבד) ה-skill עובד ידנית לפי המסמכים שב-<code>references/</code> — איטי יותר, אותם כללים.</li>
       </ul>
@@ -222,6 +222,7 @@
       <h2><span class="num">06 / scope</span>מה הערכה לא עושה</h2>
       <ul>
         <li>לא ממציאה מפרסם, איש קשר או תיאורים — שואלת, או משאירה <code>TODO</code> ואומרת זאת.</li>
+        <li>לא כותבת בכיסוי המרחבי את הנוסח ”השטחים הכבושים“ (או מקבילו באנגלית) — גם כשמבקשים. הכיסוי נכתב כפי שהנוהל מבקש (ארצי / מטרופולין / יישוב) או בשם המנהלי הרשמי (מחוז, אזור יהודה ושומרון); ערך כזה בקובץ התצורה מוחזר ל-<code>TODO</code> ונרשם בדוח, וקובץ מטא-דאטה שכבר מכיל אותו מקבל שגיאה <code>spatial_coverage_wording</code>.</li>
         <li>לא משנה את קבצי הנתונים ולא דורסת את קובץ המטא-דאטה המקורי.</li>
         <li>לא בודקת נכונות נתונים (ספירות, מקדמי ניפוח, גיאומטריה). לגלאים — מערכת sensor-sal עושה את זה.</li>
         <li>ספירות תנועה (פורמט אחוד לספירות, גרסה 3.0) — מחוץ לנוהל (סעיף 6) ומחוץ לערכה.</li>

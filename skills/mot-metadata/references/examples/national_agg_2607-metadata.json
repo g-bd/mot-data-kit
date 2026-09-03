@@ -57,9 +57,9 @@
     "maps/basemap/v_260112_basemap.zip",
     "maps/basemap/rejected/v_260112_rejected_links.xlsx"
   ],
-  "Size": 24.02,
+  "Size": "24 MB (25,147,377 bytes)",
   "Metadata creator": "גולן בן-דור, אשד מהנדסים ויועצים",
-  "Metadata creation date": "23/08/2026",
+  "Metadata creation date": "03/09/2026",
   "Metadata version": "1.1",
   "Comments": [
     "גרסה 1.0 – הפצה ראשונה של חודש יולי 2026; ההפצה החודשית הקודמת (יוני 2026) היא סט נתונים נפרד"
@@ -78,8 +78,8 @@
       "File name": "avg_daily_profile.csv.gz",
       "File format": "CSV",
       "File description": "פרופיל יומי ממוצע לכל קטע: ממוצע לכל שעה ביממה על פני כל ימי התקופה, לפי סוג יום",
-      "File size": 2.039,
-      "File date": "23/08/2026",
+      "File size": "2 MB (2,138,519 bytes)",
+      "File date": "03/09/2026",
       "Data encoding": "UTF-8",
       "File fields": [
         {
@@ -182,8 +182,8 @@
       "File name": "hourly_agg.csv.gz",
       "File format": "CSV",
       "File description": "אגרגציה שעתית לכל קטע דרך: זמן נסיעה, מרחק ומהירות ממוצעים לכל שעה ביולי 2026 (שורות רק לשעות עם נתונים)",
-      "File size": 16.469,
-      "File date": "23/08/2026",
+      "File size": "16.5 MB (17,268,557 bytes)",
+      "File date": "03/09/2026",
       "Data encoding": "UTF-8",
       "File fields": [
         {
@@ -280,8 +280,8 @@
       "File name": "quality_by_link.csv",
       "File format": "CSV",
       "File description": "מדדי שלמות וכיסוי לכל קטע ברשת (כולל קטעים ללא נתונים)",
-      "File size": 0.103,
-      "File date": "23/08/2026",
+      "File size": "105 KB (107,501 bytes)",
+      "File date": "03/09/2026",
       "Data encoding": "UTF-8",
       "File fields": [
         {
@@ -344,8 +344,8 @@
       "File name": "special_days.csv",
       "File format": "CSV",
       "File description": "ימים מיוחדים בתקופה (חגים ואירועים) – המקום היחיד בו מופיעים שמות החגים/האירועים",
-      "File size": 0.0,
-      "File date": "23/08/2026",
+      "File size": "224 B (224 bytes)",
+      "File date": "03/09/2026",
       "Data encoding": "UTF-8 (BOM)",
       "File fields": [
         {
@@ -412,8 +412,8 @@
       "File name": "maps/source_map/v_251127_RASHIT_EZORIT.zip",
       "File format": "SHP (ZIP)",
       "File description": "שכבת צירי הדרכים הארצית של למ\"ס (RASHIT_EZORIT), מהדורת v_251127 (27/11/2025) – שכבת המקור שממנה נבנה ה-basemap; מצורפת לשחזור השושלת (ראה maps/source_map/README.md)",
-      "File size": 3.946,
-      "File date": "23/08/2026",
+      "File size": "3.9 MB (4,138,203 bytes)",
+      "File date": "03/09/2026",
       "Spatial reference system": "EPSG:2039",
       "Geographic bounding": "130451.5735, 378324.712, 280229.0977, 803603.9414",
       "Geographic type": "Polyline",
@@ -580,8 +580,8 @@
       "File name": "maps/basemap/v_260112_a_b.xlsx",
       "File format": "XLSX",
       "File description": "טבלת A-B של ה-basemap: לכל קטע נקודת התחלה וסיום (WGS84) ונקודות מעבר שנשלחו ל-Google Routes",
-      "File size": 0.112,
-      "File date": "23/08/2026",
+      "File size": "115.2 KB (117,935 bytes)",
+      "File date": "03/09/2026",
       "File fields": [
         {
           "Name": "שם מקטע",
@@ -632,8 +632,8 @@
       "File name": "maps/basemap/v_260112_basemap.zip",
       "File format": "SHP (ZIP)",
       "File description": "שכבת הקטעים המכווניים (basemap v_260112) שעליהם נמדדו זמני הנסיעה; כל כביש דו-כיווני מופיע פעמיים (קטע לכל כיוון). השדה Name = link_id בקבצי האגרגציה. נבנה משכבת למ\"ס v_251127 לאחר עדכוני מפה ובקרת שדה (ראה maps/basemap/README.md)",
-      "File size": 1.22,
-      "File date": "23/08/2026",
+      "File size": "1.2 MB (1,279,359 bytes)",
+      "File date": "03/09/2026",
       "Spatial reference system": "EPSG:2039",
       "Geographic bounding": "130498.606012, 378320.366239, 280234.612335, 801404.593609",
       "Geographic type": "Polyline",
@@ -771,8 +771,8 @@
       "File name": "maps/basemap/rejected/v_260112_rejected_links.xlsx",
       "File format": "XLSX",
       "File description": "קטעים שנבדקו ונדחו בבניית ה-basemap (אינם נושאים מדידות) – לתיעוד בלבד",
-      "File size": 0.006,
-      "File date": "23/08/2026",
+      "File size": "6 KB (6,115 bytes)",
+      "File date": "03/09/2026",
       "File fields": [
         {
           "Name": "שם מקטע",
@@ -820,9 +820,11 @@
     "profile_version": null,
     "dataset_kind": "monitoring",
     "survey_block": false,
-    "generated": "23/08/2026 19:20",
+    "generated": "03/09/2026 16:03",
     "folder": "G:\\golan\\work\\consultant\\dev\\eshed\\projects\\metadatavalidor-skill\\test\\google_agg_national_2607",
     "todo": [],
-    "auto_keys": []
+    "auto_keys": [],
+    "auto_from_docs": [],
+    "refused_wording": []
   }
 }

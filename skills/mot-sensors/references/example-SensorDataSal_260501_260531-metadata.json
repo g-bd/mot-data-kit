@@ -17,10 +17,10 @@
     "ספירות תנועה",
     "סל הספירות הלאומי"
   ],
-  "Created": "23/08/2026",
+  "Created": "03/09/2026",
   "Frequency of update": "חודשי",
   "Version": "1.0",
-  "Last updated": "23/08/2026",
+  "Last updated": "03/09/2026",
   "Temporal coverage": "01/05/2026 - 31/05/2026",
   "Spatial coverage": "ארצי – רשת הדרכים הבין-עירונית (נתיבי ישראל)",
   "Language": "עברית",
@@ -31,8 +31,8 @@
     "SensorDataSal_260501_260531.zip/SensorDataSal_260501_260531_table2.csv",
     "SensorDataSal_260501_260531.zip/SensorDataSal_260501_260531_table3.csv"
   ],
-  "Size": 6.06,
-  "Metadata creation date": "23/08/2026",
+  "Size": "6.1 MB (6,356,534 bytes)",
+  "Metadata creation date": "03/09/2026",
   "Metadata version": "1.1",
   "Key list": [
     "SensorDataSal_260501_260531.zip/SensorDataSal_260501_260531_table2.csv.קוד גלאי -> SensorDataSal_260501_260531.zip/SensorDataSal_260501_260531_table3.csv.קוד גלאי"
@@ -42,7 +42,7 @@
       "File name": "SensorDataSal_260501_260531.zip",
       "File format": "ZIP",
       "File description": "קובץ אצווה חודשי SensorDataSal_<from>_<to>.zip המכיל את שלוש טבלאות הפורמט (תקופת ספירה, רשימת גלאים, ספירות שעתיות)",
-      "File size": 5.837,
+      "File size": "5.8 MB (6,120,297 bytes)",
       "File date": "23/08/2026",
       "File fields": []
     },
@@ -51,6 +51,7 @@
       "File format": "CSV",
       "File comments": "בתוך הארכיון SensorDataSal_260501_260531.zip",
       "File description": "שורה אחת לקובץ חודשי: מסגרת הזמן, בסיס הזמן (60 דק'), קודי סוגי רכב 1–5 וגרסת הפורמט",
+      "File size": "183 B (183 bytes)",
       "Data encoding": "Windows-1255",
       "File fields": [
         {
@@ -126,6 +127,7 @@
       "File format": "CSV",
       "File comments": "בתוך הארכיון SensorDataSal_260501_260531.zip",
       "File description": "שורה לכל גלאי פעיל בתקופת הדיווח: מיקום לינארי וגאוגרפי, סוג גלאי והגדרת הזרועות (זרוע 1 במעלה הדרך, זרוע 2 במורד)",
+      "File size": "77.6 KB (79,443 bytes)",
       "Data encoding": "Windows-1255",
       "File fields": [
         {
@@ -207,6 +209,7 @@
       "File format": "CSV",
       "File comments": "בתוך הארכיון SensorDataSal_260501_260531.zip",
       "File description": "נפח תנועה שעתי לכל גלאי, שורה אחת לכל גלאי-שעה עם שתי קבוצות ערכים: כיוון 1 (מזרוע 1 לזרוע 2) וכיוון 2 (מזרוע 2 לזרוע 1); שעה חלקית = NA",
+      "File size": "26.5 MB (27,831,018 bytes)",
       "Data encoding": "Windows-1255",
       "File fields": [
         {
@@ -303,13 +306,15 @@
     "profile_version": "1.02",
     "dataset_kind": "monitoring",
     "survey_block": false,
-    "generated": "23/08/2026 19:16",
+    "generated": "03/09/2026 16:03",
     "folder": "G:\\golan\\work\\consultant\\dev\\eshed\\projects\\metadatavalidor-skill\\test\\sensors_2605",
     "todo": [
       "Publisher",
       "Contact",
       "Description"
     ],
-    "auto_keys": []
+    "auto_keys": [],
+    "auto_from_docs": [],
+    "refused_wording": []
   }
 }

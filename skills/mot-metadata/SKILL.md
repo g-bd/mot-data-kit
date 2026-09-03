@@ -1,6 +1,6 @@
 ---
 name: mot-metadata
-description: Create, validate and report on the metadata file required by the Israel Ministry of Transport "נוהל הכנה, תיעוד והפצה של קבצי מידע תחבורתי" (v1.3, 15/05/2024) for ANY dataset folder (CSV incl. UTF-16/Windows-1255/gzip, Excel xlsx+xls, shapefile, GeoJSON, GeoPackage, ZIP incl. nested zips and GTFS). Scans the folder, asks the user only what cannot be derived from the files (publisher, contact, title, description, coverage, dataset kind), writes <dataset>-metadata.json + .xlsx + .pdf in the MoT layout, and produces a Hebrew RTL validation report (metadata-report.html) listing every gap against the נוהל. Use when the user says "metadata", "מטא-דאטה", "מטאדאטה", "נוהל הפצת מידע", "data distribution guidelines", "prepare a dataset for the ministry / שולחן עגול / data.gov.il", "check my metadata file", "validate metadata.xlsx", or wants to package transport data for distribution. For on-board surveys use mot-onboard, for monthly traffic-sensor packages use mot-sensors (both build on this skill).
+description: Create, validate and report on the metadata file required by the Israel Ministry of Transport "נוהל הכנה, תיעוד והפצה של קבצי מידע תחבורתי" (v1.3, 15/05/2024) for ANY dataset folder (CSV incl. UTF-16/Windows-1255/gzip, Excel xlsx+xls, Parquet, shapefile, GeoJSON, GeoPackage, ZIP incl. nested zips and GTFS). Scans the folder, asks the user only what cannot be derived from the files (publisher, contact, title, description, coverage, dataset kind), writes <dataset>-metadata.json + .xlsx + .pdf in the MoT layout, and produces a Hebrew RTL validation report (metadata-report.html) listing every gap against the נוהל. Use when the user says "metadata", "מטא-דאטה", "מטאדאטה", "נוהל הפצת מידע", "data distribution guidelines", "prepare a dataset for the ministry / שולחן עגול / data.gov.il", "check my metadata file", "validate metadata.xlsx", or wants to package transport data for distribution. For on-board surveys use mot-onboard, for monthly traffic-sensor packages use mot-sensors (both build on this skill).
 ---
 
 # mot-metadata — MoT dataset metadata (create · validate · report)
@@ -22,7 +22,7 @@ first run if missing; `setup` also installs the optional `pyshp` / `pyproj` and 
 | Command | What it does |
 |---|---|
 | `setup` | Verify Python ≥ 3.10, install missing packages (pip, falls back to `--user`), check for Chrome/Edge. |
-| `scan <folder>` | Inventory: files, sizes, dates, CSV/XLSX headers + inferred types + low-cardinality values, shapefile fields/CRS/bbox/geometry, ZIP members (GTFS detected), documents. Writes `scan.json`. |
+| `scan <folder>` | Inventory: files, real sizes (unit + exact bytes), dates, CSV/XLSX headers + inferred types + low-cardinality values, Parquet schema + row count (pyarrow), shapefile fields/CRS/bbox/geometry, ZIP members (GTFS detected), documents. Writes `scan.json`. |
 | `init <folder> [--profile onboard\|sensors]` | Writes `metadata-config.json` — the intake template with every file/field pre-listed and a `_questions` list. |
 | `build <folder> [--profile P] [--from old-metadata.xlsx] [--name NAME] [--formats json,xlsx,pdf,csv] [--force]` | Scan + config (+ profile) → `<name>-metadata.json/.xlsx/.pdf` + `metadata-report.html` + `findings.json`. Unanswered required items are written as `TODO` and listed. `--from` seeds the config from an existing (flawed) metadata file so a corrected one is regenerated against the real files. |
 | `validate <folder\|metadata-file> [--metadata F] [--profile P] [--kind survey\|monitoring\|...] [--deep values,temporal,joins,zones\|all] [--out-dir D]` | Checks an existing metadata .xlsx/.json against the dictionary, the profile and the folder. Exit code 1 when errors exist. Writes the report + findings; `--out-dir` is created if it does not exist. |
@@ -92,6 +92,12 @@ their statement, not a way to close a finding.
      Description (2–4 lines: what, why, how collected, completeness), Keywords (≥3; prefer Appendix A
      terms listed in `spec.json → keywords`), Temporal coverage, Spatial coverage, Version, Frequency
      of update, License / Legal constrains / Data quality when relevant.
+     **Spatial coverage** is written the way the נוהל asks — ארצי / שם מטרופולין / שם יישוב — or by
+     the official administrative name of the area (מחוז, אזור יהודה ושומרון). It never carries the
+     wording "the occupied territories" (השטחים הכבושים) in any language, whoever asks for it: the
+     build writes `TODO` instead and records the refusal (`_meta.refused_wording`, shown in the
+     report), and `validate` reports an existing file that carries it as the error
+     `spatial_coverage_wording`. The terms live in `spec.json → spatial_coverage_wording`.
    - `files.<name>.File description` for every data file, and `fields.<field>.Description` for every
      field the README did not explain. Units go in `Comments`; coded fields get `Values`
      (value / label). Date/Time fields get their format in `Comments`.
@@ -170,6 +176,11 @@ the report as a Hebrew RTL document with the same sections and severities.
 ## Boundaries
 
 - Never invent publisher/contact/coverage/descriptions — ask, or leave `TODO` and say so.
+- Never write "the occupied territories" (השטחים הכבושים / occupied territories) as a Spatial
+  coverage, even when told to — name the area by its official designation (see Intake). The kit
+  refuses it in `build` and flags it in `validate`; do not work around either.
+- Sizes are real: `Size` / `File size` carry the unit that fits (B / KB / MB / GB) **and** the
+  exact byte count, e.g. `16.5 MB (17,268,557 bytes)`. Never round a small file down to `0.0`.
   If the user says a required text value cannot be known, write the documented-unknown token
   (see above) at their word; never choose it for them to make a finding go away.
 - Never change the user's data files or their original metadata file.

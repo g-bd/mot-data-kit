@@ -104,8 +104,8 @@ python skills/mot-metadata/scripts/mot_fix.py               <תיקייה> --met
 
 ### מה נסרק
 
-CSV (UTF-8 / Windows-1255 / UTF-16 / gzip), Excel (xlsx וגם xls ישן), Shapefile, GeoJSON, GeoPackage,
-ZIP (כולל zip בתוך zip) ו-GTFS. תיעוד קיים (README / PDF / DOCX) נקרא אוטומטית ומשמש לתיאורי השדות.
+CSV (UTF-8 / Windows-1255 / UTF-16 / gzip), Excel (xlsx וגם xls ישן), Parquet, Shapefile, GeoJSON, GeoPackage,
+ZIP (כולל zip בתוך zip) ו-GTFS. גודל כל קובץ נרשם ביחידה המתאימה (KB / MB / GB) ולצידה מספר הבייטים המדויק. תיעוד קיים (README / PDF / DOCX) נקרא אוטומטית ומשמש לתיאורי השדות.
 
 ---
 
@@ -179,8 +179,8 @@ when the package moves them into a sub-folder. **The host environment needs `pys
 
 ### What it reads
 
-CSV (UTF-8 / Windows-1255 / UTF-16 / gzip), Excel (xlsx and legacy xls), Shapefile, GeoJSON, GeoPackage,
-ZIP (including nested zips) and GTFS. Existing documentation (README / PDF / DOCX) is harvested into field
+CSV (UTF-8 / Windows-1255 / UTF-16 / gzip), Excel (xlsx and legacy xls), Parquet, Shapefile, GeoJSON, GeoPackage,
+ZIP (including nested zips) and GTFS. Every file size is written in the unit that fits (KB / MB / GB) with the exact byte count beside it. Existing documentation (README / PDF / DOCX) is harvested into field
 descriptions automatically.
 
 ### Tests

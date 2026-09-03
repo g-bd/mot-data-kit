@@ -7,7 +7,7 @@ import re
 from pathlib import Path
 from typing import Any, Optional
 
-from .scan import scan_folder
+from .scan import scan_folder, size_text
 from .spec import Spec
 from .io import split_keywords, to_text
 
@@ -202,6 +202,7 @@ def build_metadata(folder: str | Path, spec: Spec, config: Optional[dict] = None
     include_survey = (kind == "survey") or bool(spec.profile.get("survey_block"))
     todo: list[str] = []
     auto_docs: list[str] = []
+    refused: list[dict] = []        # intake answers the kit will not write (Spatial coverage wording)
     meta: dict[str, Any] = {}
 
     # ---- logical files (top-level data + documented members of archives)
@@ -225,7 +226,8 @@ def build_metadata(folder: str | Path, spec: Spec, config: Optional[dict] = None
     # ---- header
     defaults = {
         "Created": TODAY, "Last updated": TODAY, "Metadata creation date": TODAY, "Metadata version": spec.base["spec"]["metadata_version"],
-        "Version": "1.0", "Dataset file": f"{dataset_name}.zip", "Size": scan["total_size_mb"],
+        "Version": "1.0", "Dataset file": f"{dataset_name}.zip",
+        "Size": size_text(scan["total_size_bytes"]) if scan.get("total_size_bytes") is not None else scan["total_size_mb"],
         "Related documents": list(scan["documents"]),
         "Files list": [n for n, _, _ in logical],
         "Frequency of update": spec.profile.get("default_header", {}).get("Frequency of update"),
@@ -252,6 +254,13 @@ def build_metadata(folder: str | Path, spec: Spec, config: Optional[dict] = None
         val: Any = src if src not in (None, "", [], [""]) else defaults.get(key)
         if key == "Keywords":
             val = split_keywords(src) if src else kw_default
+        if key == "Spatial coverage" and val not in (None, "", [], [""]):
+            bad = spec.forbidden_wording(val)
+            if bad:
+                # the owner's rule: this wording is never written, whoever asked for it -
+                # the key goes back to TODO and the refusal is recorded where the report shows it
+                refused.append({"key": key, "value": to_text(val if not isinstance(val, list) else " / ".join(map(to_text, val))), "term": bad})
+                val = None
         if val in (None, "", [], [""]):
             if item["status"] == "required" or (item["status"] == "required*" and key in ("Files list", "Key list", "Version")):
                 if key == "Key list":
@@ -287,7 +296,9 @@ def build_metadata(folder: str | Path, spec: Spec, config: Optional[dict] = None
             desc = TODO
             todo.append(f"{name}: File description")
         fl["File description"] = desc
-        if e.get("size_mb") is not None:
+        if e.get("size_bytes") is not None:
+            fl["File size"] = size_text(e.get("size_bytes_all", e["size_bytes"]))
+        elif e.get("size_mb") is not None:
             fl["File size"] = e.get("size_mb_all", e["size_mb"])
         if e.get("modified"):
             fl["File date"] = e["modified"]
@@ -311,6 +322,11 @@ def build_metadata(folder: str | Path, spec: Spec, config: Optional[dict] = None
                     todo.append(f"{name}: {k}")
         for k, v in fcfg.items():
             if k not in fl and k not in ("fields", "File description") and not k.startswith("_"):
+                if k == "Spatial coverage" and spec.forbidden_wording(v):
+                    refused.append({"key": f"{name}: {k}", "value": to_text(v), "term": spec.forbidden_wording(v)})
+                    todo.append(f"{name}: {k}")
+                    fl[k] = TODO
+                    continue
                 fl[k] = v
         # fields
         cols = (gis or e).get("fields") or []
@@ -388,6 +404,7 @@ def build_metadata(folder: str | Path, spec: Spec, config: Optional[dict] = None
         "profile": spec.profile_name, "profile_version": (spec.profile.get("spec") or {}).get("version"),
         "dataset_kind": kind, "survey_block": include_survey, "generated": _dt.datetime.now().strftime("%d/%m/%Y %H:%M"),
         "folder": str(folder), "todo": todo, "auto_keys": auto_keys, "auto_from_docs": auto_docs,
+        "refused_wording": refused,
     }
     return meta, scan
 

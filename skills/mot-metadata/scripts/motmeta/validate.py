@@ -119,6 +119,18 @@ def _check_unknown(key: str, val: Any, item: dict, section: str, spec: Spec, fx:
     return verdict
 
 
+def _check_wording(section: str, where: str, key: str, value: Any, spec: Spec, fx: Findings) -> None:
+    """Owner rule (03/09/2026): Spatial coverage never carries the 'occupied territories' wording,
+    in any language or spelling - at the dataset level or per file. Always an error."""
+    bad = spec.forbidden_wording(value)
+    if not bad:
+        return
+    w = spec.spatial_wording
+    fx.add("error", section, where, "spatial_coverage_wording",
+           f"{key} מכיל את הנוסח '{bad}' – נוסח שאין לכתוב בכיסוי המרחבי",
+           w.get("note", ""), "כתוב במקומו: " + (w.get("use_instead") or "ארצי / מטרופולין / שם יישוב"))
+
+
 def _norm_file(n: str) -> str:
     return re.sub(r"[​-‏‪-‮﻿]", "", n.replace("\\", "/")).strip().lower()
 
@@ -180,6 +192,8 @@ def check_header(meta: dict, spec: Spec, include_survey: bool, fx: Findings, n_f
             fx.add("warning", "header", key, "unexpected_value", f"{key} = '{txt}' – לפי נוהל {spec.base['spec']['version']} הערך הצפוי הוא '{it['expected']}'")
         if kind == "block" and isinstance(val, str) and len(val) > 300:
             fx.add("info", "header", key, "block_single_line", f"{key} נכתב כשורה אחת ארוכה – בנוהל זהו בלוק; רצוי לפצל לכמה שורות")
+        if key == "Spatial coverage":
+            _check_wording("header", key, key, val, spec, fx)
     # keywords
     kws = split_keywords(meta.get("Keywords"))
     if kws:
@@ -349,6 +363,8 @@ def check_files(meta: dict, spec: Spec, scan: Optional[dict], fx: Findings) -> N
         name = to_text(fl.get("File name"))
         where = name or "(file)"
         delivery_member = _is_delivery(name, spec)
+        if not _empty(fl.get("Spatial coverage")):
+            _check_wording("files", where, "Spatial coverage", fl.get("Spatial coverage"), spec, fx)
         if _is_todo(fl.get("File description")):
             fx.add("warning" if delivery_member else "error", "files", where, "todo", "File description מסומן TODO",
                    "", "", FORMAT_EXEMPT if delivery_member else "")

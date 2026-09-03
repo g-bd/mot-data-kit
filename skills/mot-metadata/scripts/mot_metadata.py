@@ -25,7 +25,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 REQUIRED = {"openpyxl": "openpyxl>=3.1"}
-OPTIONAL = {"shapefile": "pyshp>=2.3", "pyproj": "pyproj>=3.4", "xlrd": "xlrd>=2.0"}
+OPTIONAL = {"shapefile": "pyshp>=2.3", "pyproj": "pyproj>=3.4", "xlrd": "xlrd>=2.0", "pyarrow": "pyarrow>=14"}
 
 
 def ensure_deps(install_optional: bool = False, quiet: bool = True) -> list[str]:
@@ -130,7 +130,7 @@ def cmd_init(a) -> int:
     cfg["_questions"] = [
         "dataset_kind: survey (סקר סטטיסטי – מחייב בלוק סקר) / monitoring / administrative / gis / model / other",
         "header.Publisher, header.Contact (+Email), header.Author (אם שונה מהמפרסם)",
-        "header.Title, header.Description (שורות), header.Keywords (מנספח א'), header.Temporal coverage, header.Spatial coverage",
+        "header.Title, header.Description (שורות), header.Keywords (מנספח א'), header.Temporal coverage, header.Spatial coverage (ארצי / מטרופולין / יישוב / מחוז – בשמות מנהליים רשמיים; הנוסח 'השטחים הכבושים' אינו נכתב לעולם)",
         "header.Version / Frequency of update / License / Legal constrains (אם רלוונטי)",
         "files.<name>.File description לכל קובץ, ו-Description לכל שדה (Values לשדות מקודדים)",
         "keys: file.field -> file.field (אם לא יזוהו אוטומטית)",

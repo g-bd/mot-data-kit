@@ -32,6 +32,9 @@ python ../mot-metadata/scripts/mot_metadata.py validate <folder> --profile senso
 
 ## Intake questions (only these are usually needed)
 
+> `Spatial coverage` follows the base rule (mot-metadata): ארצי / official administrative names
+> only — never "השטחים הכבושים" / "occupied territories", whoever asks.
+
 1. Publisher (משרד התחבורה / נתיבי ישראל) and Author (אגף ניהול תנועה, נתיבי ישראל) — Author only
    if different from Publisher.
 2. Contact person + email.

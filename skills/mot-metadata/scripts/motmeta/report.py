@@ -58,13 +58,17 @@ def render_report(findings: list[dict], summary: dict, meta: Optional[dict] = No
                 extra = "GTFS" if e.get("gtfs") else f"{e.get('n_members', 0)} קבצים בארכיון"
             elif e.get("encoding"):
                 extra = e["encoding"]
-            rows.append(f"<tr><td>{_ltr(e['name'])}</td><td>{_e(e['role'])}</td><td>{_ltr(e.get('format') or e['ext'])}</td><td>{e['size_mb']}</td><td>{e.get('n_rows','')}</td><td>{nf or ''}</td><td>{_ltr(extra)}</td><td>{_e(e.get('error',''))}</td></tr>")
-        inv = f"""<section><h2>מצאי התיקייה</h2><div class='sub'>{_ltr(scan['folder'])} · {scan['n_files']} קבצים · {scan['total_size_mb']} MB</div>
-<table class='f' dir='ltr'><thead><tr><th>file</th><th>role</th><th>format</th><th>MB</th><th>rows</th><th>fields</th><th>notes</th><th>error</th></tr></thead><tbody>{''.join(rows)}</tbody></table></section>"""
+            rows.append(f"<tr><td>{_ltr(e['name'])}</td><td>{_e(e['role'])}</td><td>{_ltr(e.get('format') or e['ext'])}</td><td>{_e(e.get('size') or e['size_mb'])}</td><td>{e.get('n_rows','')}</td><td>{nf or ''}</td><td>{_ltr(extra)}</td><td>{_e(e.get('error',''))}</td></tr>")
+        inv = f"""<section><h2>מצאי התיקייה</h2><div class='sub'>{_ltr(scan['folder'])} · {scan['n_files']} קבצים · {_e(scan.get('total_size') or (str(scan['total_size_mb']) + ' MB'))}</div>
+<table class='f' dir='ltr'><thead><tr><th>file</th><th>role</th><th>format</th><th>size</th><th>rows</th><th>fields</th><th>notes</th><th>error</th></tr></thead><tbody>{''.join(rows)}</tbody></table></section>"""
     todo = (meta or {}).get("_meta", {}).get("todo") or []
+    refused = (meta or {}).get("_meta", {}).get("refused_wording") or []
     todo_html = ""
     if todo:
         todo_html = f"<section><h2>פריטים להשלמה ידנית (TODO)</h2><ol dir='ltr'>{''.join('<li>' + _e(x) + '</li>' for x in todo)}</ol></section>"
+    if refused:
+        items = "".join(f"<li><b>{_e(r['key'])}</b>: הנוסח '{_e(r['value'])}' לא נכתב (מכיל '{_e(r['term'])}') – הערך הוחזר ל-TODO</li>" for r in refused)
+        todo_html += f"<section><h2>נוסח שנדחה בכיסוי המרחבי</h2><p class='sub'>כיסוי מרחבי נכתב בשמות המנהליים הרשמיים (ארצי / מטרופולין / יישוב / מחוז / אזור יהודה ושומרון), לא בכינוי פוליטי.</p><ul>{items}</ul></section>"
     # KP-28: a value the publisher documented as unknown is an answer, and a different thing
     # from a TODO - so it is printed as its own list and never inside the one above.
     unknown = [f for f in findings if f.get("code") == "value_unknown_documented"]
